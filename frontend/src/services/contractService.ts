@@ -19,11 +19,13 @@ import {
 } from '@stellar/stellar-sdk';
 import type { Note, NoteDraft, WalletSession } from '../types/note';
 
-const CONTRACT_ID =
-  process.env.REACT_APP_CONTRACT_ID ??
-  'CD5QHPRT5A2T2CCE2FBEMBZY7NI5D6AVASBFKSFQN3TTKF4Z3JW62CDE';
-const RPC_URL = process.env.REACT_APP_SOROBAN_RPC_URL ?? 'https://soroban-testnet.stellar.org';
-const NETWORK_PASSPHRASE = process.env.REACT_APP_NETWORK_PASSPHRASE ?? Networks.TESTNET;
+const CONTRACT_ID = process.env.REACT_APP_CONTRACT_ID || '';
+const RPC_URL = process.env.REACT_APP_SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org';
+const NETWORK_PASSPHRASE = process.env.REACT_APP_NETWORK_PASSPHRASE || Networks.TESTNET;
+
+if (!CONTRACT_ID) {
+  console.warn('Warning: REACT_APP_CONTRACT_ID is not defined in the .env file.');
+}
 
 function createServer(): rpc.Server {
   return new rpc.Server(RPC_URL, {
