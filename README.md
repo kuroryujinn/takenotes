@@ -71,3 +71,7 @@ XXX
 ![Deployment Screenshot](images/deployment.png)
 
 ![Frontend-preview](images/frontend-preview.png)
+
+
+## Deployment link
+https://takenotes-delta.vercel.app/
