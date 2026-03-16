@@ -69,3 +69,5 @@ XXX
  https://lab.stellar.org/r/testnet/contract/CBMLFQ25PGW3LELR24SWC3QFASDM4VTNS74TUAIJV7J3UC3LN2XEZMEQ
  
 ![Deployment Screenshot](images/deployment.png)
+
+![Frontend-preview](images/frontend-preview.png)
