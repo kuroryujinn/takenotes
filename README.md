@@ -65,5 +65,7 @@ XXX
 
 (Replace with your deployed contract link)
  https://stellar.expert/explorer/testnet/tx/1aa57771d0b2c3814ae4bcd823776f86b738213077191162aa51d0f76082855d!
+
+ https://lab.stellar.org/r/testnet/contract/CBMLFQ25PGW3LELR24SWC3QFASDM4VTNS74TUAIJV7J3UC3LN2XEZMEQ
  
- [alt text](image.png)
+![Deployment Screenshot](images/deployment.png)

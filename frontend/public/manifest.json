@@ -1,0 +1,15 @@
+{
+  "short_name": "TakeNotes",
+  "name": "TakeNotes Web3 Notebook",
+  "icons": [
+    {
+      "src": "logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#2F6F7E",
+  "background_color": "#F5F5F0"
+}
