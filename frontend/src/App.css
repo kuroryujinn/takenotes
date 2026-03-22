@@ -249,6 +249,50 @@ button:not(:disabled):active {
 }
 
 
+@media (max-width: 600px) {
+  .app-shell {
+    padding: 1rem 0.75rem;
+  }
+
+  .hero {
+    padding: 1.5rem;
+  }
+
+  .hero h1 {
+    font-size: 32px;
+  }
+
+  .hero p {
+    font-size: 16px;
+  }
+
+  .status-row {
+    padding: 1rem;
+  }
+
+  .status-row p {
+    font-size: 16px;
+  }
+
+  .panel {
+    padding: 1rem;
+  }
+
+  .panel h2 {
+    font-size: 24px;
+  }
+
+  .note-card header h3 {
+    font-size: 20px;
+  }
+
+  button {
+    padding: 0.5rem 1rem;
+    font-size: 14px;
+    box-shadow: 2px 2px 0px #000000;
+  }
+}
+
 @media (max-width: 920px) {
   .layout-grid {
     grid-template-columns: 1fr;
