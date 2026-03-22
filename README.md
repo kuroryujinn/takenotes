@@ -72,8 +72,8 @@ XXX
 
 ![Frontend-preview](images/frontend-preview.png)
 
-![Mobile-preview]<img width="329" height="736" alt="image" src="https://github.com/user-attachments/assets/cb08cd41-6c44-4b7a-9334-37c93e770779" />
-
+<img width="329" height="736" alt="image" src="https://github.com/user-attachments/assets/cb08cd41-6c44-4b7a-9334-37c93e770779" />
+##Mobile Preview
 
 ## Deployment link
 https://takenotes-delta.vercel.app/
