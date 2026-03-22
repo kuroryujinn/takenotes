@@ -3,7 +3,13 @@
 #[cfg(test)]
 mod test;
 
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String, Vec};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String, Vec, Symbol};
+
+mod logger {
+    soroban_sdk::contractimport!(
+        file = "../../target/wasm32v1-none/release/logger.wasm"
+    );
+}
 
 #[contract]
 pub struct TakeNotesContract;
@@ -20,6 +26,7 @@ pub struct Note {
 #[contracttype]
 pub enum DataKey {
     Notes(Address),
+    Logger,
 }
 
 fn find_note_index(notes: &Vec<Note>, id: u32) -> Option<u32> {
@@ -37,10 +44,14 @@ fn find_note_index(notes: &Vec<Note>, id: u32) -> Option<u32> {
 
 #[contractimpl]
 impl TakeNotesContract {
+    pub fn set_logger(env: Env, logger_id: Address) {
+        env.storage().instance().set(&DataKey::Logger, &logger_id);
+    }
+
     pub fn create_note(env: Env, user: Address, id: u32, title: String, content: String) -> bool {
         user.require_auth();
 
-        let key = DataKey::Notes(user);
+        let key = DataKey::Notes(user.clone());
         let mut notes: Vec<Note> = env.storage().instance().get(&key).unwrap_or(Vec::new(&env));
 
         if find_note_index(&notes, id).is_some() {
@@ -56,6 +67,12 @@ impl TakeNotesContract {
 
         notes.push_back(note);
         env.storage().instance().set(&key, &notes);
+
+        if let Some(logger_id) = env.storage().instance().get::<DataKey, Address>(&DataKey::Logger) {
+            let client = logger::Client::new(&env, &logger_id);
+            client.log_event(&user, &String::from_str(&env, "Note Created"));
+        }
+
         true
     }
 
