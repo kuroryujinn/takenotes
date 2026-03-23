@@ -59,10 +59,10 @@ Automate build and deployment process.
 
 ### Verification
 
-* [ ] GitHub repo linked to Vercel
-* [ ] Build runs successfully on push
-* [ ] No manual deployment required
-* [ ] Environment variables configured properly
+* [x] GitHub repo linked to Vercel
+* [x] Build runs successfully on push
+* [x] No manual deployment required
+* [x] Environment variables configured properly
 
 ---
 
