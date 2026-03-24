@@ -3,11 +3,11 @@
 #[cfg(test)]
 mod test;
 
-use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String, Vec, Symbol};
+use soroban_sdk::{contract, contractimpl, contracttype, Address, Env, String, Vec};
 
 mod logger {
     soroban_sdk::contractimport!(
-        file = "../../target/wasm32v1-none/release/logger.wasm"
+        file = "../../target/wasm32-unknown-unknown/release/logger.wasm"
     );
 }
 

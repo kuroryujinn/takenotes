@@ -16,6 +16,8 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: wasm32-unknown-unknown
+      - name: Build Logger Contract
+        run: cargo build --target wasm32-unknown-unknown --release --package logger
       - name: Run Contract Tests
         run: cargo test
 
