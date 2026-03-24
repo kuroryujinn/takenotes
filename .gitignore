@@ -4,3 +4,23 @@ target
 # Local settings
 .soroban
 .stellar
+
+# CI/CD Generated Artifacts
+# Frontend build output
+frontend/node_modules/
+frontend/build/
+frontend/dist/
+frontend/.cache/
+frontend/coverage/
+
+# npm cache
+.npm
+npm-debug.log*
+
+# Rust build artifacts
+/target/
+Cargo.lock
+
+# CI/CD Logs and Artifacts
+*.log
+.DS_Store
