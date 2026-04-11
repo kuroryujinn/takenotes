@@ -6,8 +6,10 @@ interface NoteListProps {
   isLoading: boolean;
   isMutating: boolean;
   deletingNoteId: number | null;
+  viewingHistoryNoteId: number | null;
   onEdit: (note: Note) => void;
   onDelete: (note: Note) => Promise<void>;
+  onViewHistory: (note: Note) => void;
 }
 
 function formatTimestamp(unixTimestamp: number): string {
@@ -23,30 +25,53 @@ export default function NoteList({
   isLoading,
   isMutating,
   deletingNoteId,
+  viewingHistoryNoteId,
   onEdit,
   onDelete,
+  onViewHistory,
 }: NoteListProps) {
-  const orderedNotes = [...notes].sort((left, right) => right.timestamp - left.timestamp);
-
   return (
     <section className="panel list-panel">
       <h2>Your Notes</h2>
       {isLoading ? <p className="muted">Loading notes from Soroban...</p> : null}
-      {!isLoading && orderedNotes.length === 0 ? (
-        <p className="muted">No notes yet. Create your first on-chain note.</p>
+      {!isLoading && notes.length === 0 ? (
+        <p className="muted">No matching notes found. Try clearing search or filters.</p>
       ) : null}
 
       <div className="note-grid">
-        {orderedNotes.map((note) => (
+        {notes.map((note) => (
           <article key={note.id} className="note-card">
             <header>
               <h3>{note.title || 'Untitled note'}</h3>
               <span>#{note.id}</span>
             </header>
+            <div className="meta-row">
+              <strong>{note.isPinned ? 'Pinned' : 'Standard'}</strong>
+              <span>Priority: {note.priority}</span>
+              <span>Category: {note.category || 'General'}</span>
+              {note.contentCid ? <span>CID: {note.contentCid.slice(0, 16)}...</span> : null}
+            </div>
             <p>{note.content}</p>
+            {note.tags.length > 0 ? (
+              <div className="tag-list">
+                {note.tags.map((tag) => (
+                  <span key={`${note.id}-${tag}`} className="tag-pill">
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            ) : null}
             <footer>
               <small>{formatTimestamp(note.timestamp)}</small>
               <div className="actions-row">
+                <button
+                  type="button"
+                  className="secondary"
+                  onClick={() => onViewHistory(note)}
+                  disabled={isMutating}
+                >
+                  {viewingHistoryNoteId === note.id ? 'Viewing History' : 'History'}
+                </button>
                 <button
                   type="button"
                   className="secondary"

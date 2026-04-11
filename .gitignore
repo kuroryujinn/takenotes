@@ -12,6 +12,8 @@ frontend/build/
 frontend/dist/
 frontend/.cache/
 frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
 
 # npm cache
 .npm

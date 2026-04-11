@@ -141,6 +141,19 @@ npm install
 npm start
 ```
 
+Create `frontend/.env` (or `.env.local`) with:
+
+```bash
+REACT_APP_CONTRACT_ID=<deployed_contract_id>
+REACT_APP_SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
+REACT_APP_NETWORK_PASSPHRASE=Test SDF Network ; September 2015
+REACT_APP_IPFS_UPLOAD_URL=https://api.pinata.cloud/pinning/pinJSONToIPFS
+REACT_APP_IPFS_UPLOAD_TOKEN=<pinata_jwt>
+REACT_APP_IPFS_GATEWAY=https://ipfs.io/ipfs
+```
+
+Phase 3 uses client-side encryption in the browser and stores only IPFS CIDs on-chain.
+
 ### 3) Production build (frontend)
 
 ```bash

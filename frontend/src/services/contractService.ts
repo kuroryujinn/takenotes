@@ -17,9 +17,10 @@ import {
   scValToNative,
   xdr,
 } from '@stellar/stellar-sdk';
-import type { Note, NoteDraft, WalletSession } from '../types/note';
+import type { ActivityEvent, Note, NoteDraft, NoteHistoryEntry, WalletSession } from '../types/note';
 
 const CONTRACT_ID = process.env.REACT_APP_CONTRACT_ID || '';
+const LOGGER_CONTRACT_ID = process.env.REACT_APP_LOGGER_CONTRACT_ID || '';
 const RPC_URL = process.env.REACT_APP_SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org';
 const NETWORK_PASSPHRASE = process.env.REACT_APP_NETWORK_PASSPHRASE || Networks.TESTNET;
 
@@ -35,6 +36,14 @@ function createServer(): rpc.Server {
 
 function contract(): Contract {
   return new Contract(CONTRACT_ID);
+}
+
+function loggerContract(): Contract | null {
+  if (!LOGGER_CONTRACT_ID) {
+    return null;
+  }
+
+  return new Contract(LOGGER_CONTRACT_ID);
 }
 
 function toErrorMessage(error: unknown): string {
@@ -82,6 +91,24 @@ function toText(value: unknown, fallback = ''): string {
   return fallback;
 }
 
+function toBoolean(value: unknown, fallback = false): boolean {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+
+  return fallback;
+}
+
+function toStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => (typeof item === 'string' ? item.trim() : ''))
+    .filter((item) => item.length > 0);
+}
+
 function isMissingFunctionError(error: unknown, methodName: string): boolean {
   const message = toErrorMessage(error).toLowerCase();
   const escapedName = methodName.toLowerCase();
@@ -95,13 +122,34 @@ function isMissingFunctionError(error: unknown, methodName: string): boolean {
   );
 }
 
+function isSignatureMismatchError(error: unknown, methodName: string): boolean {
+  const message = toErrorMessage(error).toLowerCase();
+  const target = methodName.toLowerCase();
+
+  return (
+    message.includes(target) &&
+    (message.includes('argument') ||
+      message.includes('arity') ||
+      message.includes('invalid input') ||
+      message.includes('type mismatch') ||
+      message.includes('xdr'))
+  );
+}
+
 function toNote(raw: unknown): Note {
   const value = normalizeRecord(raw);
+  const contentCid = toText(value.content_cid, toText(value.content, ''));
 
   return {
     id: toNumber(value.id, 0),
     title: toText(value.title, ''),
     content: toText(value.content, toText(value.text, '')),
+    contentCid,
+    isEncrypted: contentCid.length > 0,
+    tags: toStringArray(value.tags),
+    category: toText(value.category, 'General'),
+    isPinned: toBoolean(value.is_pinned, false),
+    priority: Math.max(0, Math.min(255, toNumber(value.priority, 0))),
     timestamp: toNumber(value.timestamp, 0),
   };
 }
@@ -112,6 +160,51 @@ function toNoteArray(raw: unknown): Note[] {
   }
 
   return raw.map(toNote).filter((note) => Number.isInteger(note.id));
+}
+
+function toHistoryEntry(raw: unknown): NoteHistoryEntry {
+  const value = normalizeRecord(raw);
+
+  return {
+    noteId: toNumber(value.note_id, 0),
+    version: toNumber(value.version, 0),
+    action: toText(value.action, ''),
+    title: toText(value.title, ''),
+    content: toText(value.content_cid, toText(value.content, '')),
+    tags: toStringArray(value.tags),
+    category: toText(value.category, 'General'),
+    isPinned: toBoolean(value.is_pinned, false),
+    priority: Math.max(0, Math.min(255, toNumber(value.priority, 0))),
+    timestamp: toNumber(value.timestamp, 0),
+  };
+}
+
+function toHistoryArray(raw: unknown): NoteHistoryEntry[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  return raw
+    .map(toHistoryEntry)
+    .filter((entry) => Number.isInteger(entry.noteId) && Number.isInteger(entry.version));
+}
+
+function toActivityEvent(raw: unknown): ActivityEvent {
+  const value = normalizeRecord(raw);
+
+  return {
+    noteId: toNumber(value.note_id, 0),
+    action: toText(value.action, ''),
+    timestamp: toNumber(value.timestamp, 0),
+  };
+}
+
+function toActivityArray(raw: unknown): ActivityEvent[] {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+
+  return raw.map(toActivityEvent).filter((entry) => Number.isInteger(entry.noteId));
 }
 
 function assertFreighterCall<T extends { error?: { message?: string } }>(result: T): T {
@@ -204,6 +297,15 @@ async function invokeRead(
   method: string,
   args: xdr.ScVal[]
 ): Promise<unknown> {
+  return invokeReadFromContract(session, contract(), method, args);
+}
+
+async function invokeReadFromContract(
+  session: WalletSession,
+  targetContract: Contract,
+  method: string,
+  args: xdr.ScVal[]
+): Promise<unknown> {
   const server = createServer();
   const sourceAccount = await server.getAccount(session.address);
 
@@ -212,7 +314,7 @@ async function invokeRead(
     networkPassphrase: session.networkPassphrase,
   })
     .setTimeout(60)
-    .addOperation(contract().call(method, ...args))
+    .addOperation(targetContract.call(method, ...args))
     .build();
 
   const simulation = await server.simulateTransaction(tx);
@@ -263,6 +365,24 @@ export async function fetchNotes(session: WalletSession): Promise<Note[]> {
   return toNoteArray(result);
 }
 
+export async function fetchNoteHistory(session: WalletSession, noteId: number): Promise<NoteHistoryEntry[]> {
+  const result = await invokeRead(session, 'get_note_history', [
+    toAddressScVal(session.address),
+    nativeToScVal(noteId, { type: 'u32' }),
+  ]);
+  return toHistoryArray(result);
+}
+
+export async function fetchActivityFeed(session: WalletSession): Promise<ActivityEvent[]> {
+  const target = loggerContract();
+  if (!target) {
+    return [];
+  }
+
+  const result = await invokeReadFromContract(session, target, 'get_events', [toAddressScVal(session.address)]);
+  return toActivityArray(result).sort((left, right) => right.timestamp - left.timestamp);
+}
+
 export async function createNote(session: WalletSession, draft: NoteDraft): Promise<boolean> {
   try {
     const result = await invokeWrite(session, 'create_note', [
@@ -270,6 +390,10 @@ export async function createNote(session: WalletSession, draft: NoteDraft): Prom
       nativeToScVal(draft.id, { type: 'u32' }),
       nativeToScVal(draft.title, { type: 'string' }),
       nativeToScVal(draft.content, { type: 'string' }),
+      nativeToScVal(draft.tags),
+      nativeToScVal(draft.category, { type: 'string' }),
+      nativeToScVal(draft.isPinned),
+      nativeToScVal(draft.priority, { type: 'u32' }),
     ]);
 
     // Legacy contracts may return void for write methods; treat successful submission as created.
@@ -279,9 +403,25 @@ export async function createNote(session: WalletSession, draft: NoteDraft): Prom
 
     return Boolean(result);
   } catch (error) {
-    // Backward compatibility: older deployments only have add_note(user, id, text).
-    if (!isMissingFunctionError(error, 'create_note')) {
+    // Backward compatibility: older deployments may expose only create_note(user,id,title,content)
+    // or add_note(user,id,text).
+    if (!(isMissingFunctionError(error, 'create_note') || isSignatureMismatchError(error, 'create_note'))) {
       throw error;
+    }
+
+    try {
+      await invokeWrite(session, 'create_note', [
+        toAddressScVal(session.address),
+        nativeToScVal(draft.id, { type: 'u32' }),
+        nativeToScVal(draft.title, { type: 'string' }),
+        nativeToScVal(draft.content, { type: 'string' }),
+      ]);
+
+      return true;
+    } catch (legacyError) {
+      if (!isSignatureMismatchError(legacyError, 'create_note')) {
+        throw legacyError;
+      }
     }
 
     await invokeWrite(session, 'add_note', [
@@ -301,12 +441,18 @@ export async function updateNote(session: WalletSession, draft: NoteDraft): Prom
       nativeToScVal(draft.id, { type: 'u32' }),
       nativeToScVal(draft.title, { type: 'string' }),
       nativeToScVal(draft.content, { type: 'string' }),
+      nativeToScVal(draft.tags),
+      nativeToScVal(draft.category, { type: 'string' }),
+      nativeToScVal(draft.isPinned),
+      nativeToScVal(draft.priority, { type: 'u32' }),
     ]);
 
     return Boolean(result);
   } catch (error) {
-    if (isMissingFunctionError(error, 'update_note')) {
-      throw new Error('This deployed contract does not support note updates yet. Please redeploy the latest contract.');
+    if (isMissingFunctionError(error, 'update_note') || isSignatureMismatchError(error, 'update_note')) {
+      throw new Error(
+        'This deployed contract does not support metadata-aware note updates yet. Please redeploy the latest contract.'
+      );
     }
     throw error;
   }

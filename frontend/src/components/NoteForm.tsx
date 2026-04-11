@@ -19,6 +19,10 @@ export default function NoteForm({
   const [idValue, setIdValue] = useState<string>('');
   const [title, setTitle] = useState<string>('');
   const [content, setContent] = useState<string>('');
+  const [tagsValue, setTagsValue] = useState<string>('');
+  const [category, setCategory] = useState<string>('General');
+  const [isPinned, setIsPinned] = useState<boolean>(false);
+  const [priorityValue, setPriorityValue] = useState<string>('0');
   const [localError, setLocalError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -27,6 +31,10 @@ export default function NoteForm({
         setIdValue('');
         setTitle('');
         setContent('');
+        setTagsValue('');
+        setCategory('General');
+        setIsPinned(false);
+        setPriorityValue('0');
       }
       return;
     }
@@ -34,6 +42,10 @@ export default function NoteForm({
     setIdValue(String(initialNote.id));
     setTitle(initialNote.title);
     setContent(initialNote.content);
+    setTagsValue(initialNote.tags.join(', '));
+    setCategory(initialNote.category || 'General');
+    setIsPinned(initialNote.isPinned);
+    setPriorityValue(String(initialNote.priority));
   }, [initialNote, mode]);
 
   const submitLabel = mode === 'create' ? 'Create Note' : 'Save Changes';
@@ -53,16 +65,35 @@ export default function NoteForm({
       return;
     }
 
+    const parsedPriority = Number(priorityValue);
+    if (!Number.isInteger(parsedPriority) || parsedPriority < 0 || parsedPriority > 255) {
+      setLocalError('Priority must be an integer between 0 and 255.');
+      return;
+    }
+
+    const tags = tagsValue
+      .split(',')
+      .map((tag) => tag.trim())
+      .filter((tag) => tag.length > 0);
+
     await onSubmit({
       id: parsedId,
       title: title.trim(),
       content: content.trim(),
+      tags,
+      category: category.trim() || 'General',
+      isPinned,
+      priority: parsedPriority,
     });
 
     if (mode === 'create') {
       setIdValue('');
       setTitle('');
       setContent('');
+      setTagsValue('');
+      setCategory('General');
+      setIsPinned(false);
+      setPriorityValue('0');
     }
   };
 
@@ -100,6 +131,44 @@ export default function NoteForm({
             rows={4}
             required
           />
+        </label>
+
+        <label>
+          Tags (comma separated)
+          <input
+            value={tagsValue}
+            onChange={(event) => setTagsValue(event.target.value)}
+            placeholder="work, ideas, urgent"
+          />
+        </label>
+
+        <label>
+          Category
+          <input
+            value={category}
+            onChange={(event) => setCategory(event.target.value)}
+            placeholder="General"
+          />
+        </label>
+
+        <label>
+          Priority (0-255)
+          <input
+            value={priorityValue}
+            onChange={(event) => setPriorityValue(event.target.value)}
+            inputMode="numeric"
+            placeholder="0"
+            required
+          />
+        </label>
+
+        <label className="checkbox-row">
+          <input
+            type="checkbox"
+            checked={isPinned}
+            onChange={(event) => setIsPinned(event.target.checked)}
+          />
+          <span>Pin this note</span>
         </label>
 
         {localError ? <p className="error-text">{localError}</p> : null}
