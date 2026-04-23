@@ -3,6 +3,7 @@ import type { Note } from '../types/note';
 
 interface NoteListProps {
   notes: Note[];
+  activeAddressLabel: string | null;
   isLoading: boolean;
   isMutating: boolean;
   deletingNoteId: number | null;
@@ -27,6 +28,7 @@ function looksLikeIpfsCid(value: string): boolean {
 
 export default function NoteList({
   notes,
+  activeAddressLabel,
   isLoading,
   isMutating,
   deletingNoteId,
@@ -38,6 +40,7 @@ export default function NoteList({
   return (
     <section className="panel list-panel">
       <h2>Your Notes</h2>
+      {activeAddressLabel ? <p className="muted">Viewing notes for: {activeAddressLabel}</p> : null}
       {isLoading ? <p className="muted">Loading notes from Soroban...</p> : null}
       {!isLoading && notes.length === 0 ? (
         <p className="muted">No matching notes found. Try clearing search or filters.</p>

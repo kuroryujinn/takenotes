@@ -67,6 +67,11 @@ const session: WalletSession = {
   networkPassphrase: 'Test SDF Network ; September 2015',
 };
 
+const sessionTwo: WalletSession = {
+  address: 'GSECONDWALLETADDRESS999',
+  networkPassphrase: 'Test SDF Network ; September 2015',
+};
+
 function looksLikeIpfsCid(value: string): boolean {
   return /^[a-zA-Z0-9]{46,}$/.test(value.trim());
 }
@@ -147,7 +152,7 @@ describe('HomePage interactions', () => {
     const user = userEvent;
     render(<HomePage />);
 
-    await screen.findByText(/wallet successfully connected/i);
+    await screen.findByText(/wallet connected:/i);
 
     await user.type(screen.getByLabelText(/encryption secret/i), 'my-secret');
 
@@ -166,6 +171,10 @@ describe('HomePage interactions', () => {
     expect(await screen.findByText('Decrypted content')).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /edit/i }));
+    expect(await screen.findByRole('heading', { name: /edit note/i })).toBeInTheDocument();
+    expect(screen.getByDisplayValue('1')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('First Note')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('Decrypted content')).toBeInTheDocument();
     const titleInput = screen.getByLabelText(/^title$/i);
     const contentInput = screen.getByLabelText(/content/i);
 
@@ -176,6 +185,7 @@ describe('HomePage interactions', () => {
     await user.click(screen.getByRole('button', { name: /save changes/i }));
 
     expect(await screen.findByRole('heading', { name: 'First Note Updated' })).toBeInTheDocument();
+    expect(await screen.findByText(/viewing notes for:/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /delete/i }));
 
@@ -191,7 +201,7 @@ describe('HomePage interactions', () => {
 
     render(<HomePage />);
 
-    await screen.findByText(/wallet successfully connected/i);
+    await screen.findByText(/wallet connected:/i);
 
     await user.type(screen.getByLabelText(/encryption secret/i), 'my-secret');
     await user.type(screen.getByLabelText(/note id/i), '7');
@@ -270,6 +280,7 @@ describe('HomePage interactions', () => {
     expect(screen.getByText(/on note #5/i)).toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /history/i }));
+    expect(await screen.findByRole('button', { name: /viewing history/i })).toBeInTheDocument();
 
     expect(await screen.findByText(/showing immutable history for note #5/i)).toBeInTheDocument();
     expect(await screen.findByText('v2')).toBeInTheDocument();
@@ -278,5 +289,56 @@ describe('HomePage interactions', () => {
     await waitFor(() => {
       expect(mockedFetchNoteHistory).toHaveBeenCalledWith(session, 5);
     });
+  });
+
+  test('refresh wallet now switches visible notes to refreshed wallet session', async () => {
+    const user = userEvent;
+    let activeSession = session;
+    let walletOneNotes: Note[] = [
+      {
+        id: 1,
+        title: 'Wallet One Note',
+        content: 'one',
+        contentCid: '',
+        isEncrypted: false,
+        tags: [],
+        category: 'General',
+        isPinned: false,
+        priority: 0,
+        timestamp: 100,
+      },
+    ];
+    const walletTwoNotes: Note[] = [
+      {
+        id: 2,
+        title: 'Wallet Two Note',
+        content: 'two',
+        contentCid: '',
+        isEncrypted: false,
+        tags: [],
+        category: 'General',
+        isPinned: false,
+        priority: 0,
+        timestamp: 200,
+      },
+    ];
+
+    mockedGetWalletSession.mockImplementation(async () => activeSession);
+    mockedFetchNotes.mockImplementation(async (sessionArg) =>
+      sessionArg.address === session.address ? [...walletOneNotes] : [...walletTwoNotes]
+    );
+
+    render(<HomePage />);
+
+    expect(await screen.findByRole('heading', { name: 'Wallet One Note' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Wallet Two Note' })).not.toBeInTheDocument();
+
+    activeSession = sessionTwo;
+    walletOneNotes = [];
+    await user.click(screen.getByRole('button', { name: /refresh wallet now/i }));
+
+    expect(await screen.findByRole('heading', { name: 'Wallet Two Note' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Wallet One Note' })).not.toBeInTheDocument();
+    expect(await screen.findByText(/active address:/i)).toBeInTheDocument();
   });
 });

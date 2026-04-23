@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import jsPDF from 'jspdf';
 import ActivityFeed from '../components/ActivityFeed';
 import NoteForm from '../components/NoteForm';
@@ -34,6 +34,7 @@ export default function HomePage() {
   const [noteHistory, setNoteHistory] = useState<NoteHistoryEntry[]>([]);
   const [isLoadingNoteHistory, setIsLoadingNoteHistory] = useState<boolean>(false);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
+  const [isRefreshingWallet, setIsRefreshingWallet] = useState<boolean>(false);
   const [isLoadingNotes, setIsLoadingNotes] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [deletingNoteId, setDeletingNoteId] = useState<number | null>(null);
@@ -44,6 +45,11 @@ export default function HomePage() {
   const [encryptionSecret, setEncryptionSecret] = useState<string>('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>('Connect Freighter to manage notes.');
+  const notesRequestIdRef = useRef(0);
+  const activityRequestIdRef = useRef(0);
+  const historyRequestIdRef = useRef(0);
+
+  const formatAddress = (address: string): string => `${address.slice(0, 6)}...${address.slice(-6)}`;
 
   const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -91,39 +97,87 @@ export default function HomePage() {
   );
 
   const loadNotes = useCallback(async (activeSession: WalletSession) => {
+    const requestId = notesRequestIdRef.current + 1;
+    notesRequestIdRef.current = requestId;
     setIsLoadingNotes(true);
+
     try {
       const fetchedNotes = await fetchNotes(activeSession);
       const readableNotes = await hydrateReadableNotes(fetchedNotes, activeSession);
+
+      if (requestId !== notesRequestIdRef.current) {
+        return;
+      }
+
       setNotes(readableNotes);
       setErrorMessage(null);
     } catch (error) {
+      if (requestId !== notesRequestIdRef.current) {
+        return;
+      }
+
       setErrorMessage(error instanceof Error ? error.message : 'Could not fetch notes.');
     } finally {
+      if (requestId !== notesRequestIdRef.current) {
+        return;
+      }
+
       setIsLoadingNotes(false);
     }
   }, [hydrateReadableNotes]);
 
   const loadActivityFeed = useCallback(async (activeSession: WalletSession) => {
+    const requestId = activityRequestIdRef.current + 1;
+    activityRequestIdRef.current = requestId;
     setIsLoadingActivityFeed(true);
+
     try {
       const events = await fetchActivityFeed(activeSession);
+
+      if (requestId !== activityRequestIdRef.current) {
+        return;
+      }
+
       setActivityFeed(events);
     } catch {
+      if (requestId !== activityRequestIdRef.current) {
+        return;
+      }
+
       setActivityFeed([]);
     } finally {
+      if (requestId !== activityRequestIdRef.current) {
+        return;
+      }
+
       setIsLoadingActivityFeed(false);
     }
   }, []);
 
   const loadNoteHistory = useCallback(async (activeSession: WalletSession, noteId: number) => {
+    const requestId = historyRequestIdRef.current + 1;
+    historyRequestIdRef.current = requestId;
     setIsLoadingNoteHistory(true);
+
     try {
       const history = await fetchNoteHistory(activeSession, noteId);
+
+      if (requestId !== historyRequestIdRef.current) {
+        return;
+      }
+
       setNoteHistory(history);
     } catch {
+      if (requestId !== historyRequestIdRef.current) {
+        return;
+      }
+
       setNoteHistory([]);
     } finally {
+      if (requestId !== historyRequestIdRef.current) {
+        return;
+      }
+
       setIsLoadingNoteHistory(false);
     }
   }, []);
@@ -150,23 +204,60 @@ export default function HomePage() {
     [hydrateReadableNotes]
   );
 
-  useEffect(() => {
-    let disposed = false;
+  const syncSessionFromWallet = useCallback(async (allowDisconnect = false): Promise<WalletSession | null> => {
+    const latestSession = await getWalletSession();
 
-    const hydrateSession = async () => {
-      const existingSession = await getWalletSession();
-      if (!disposed && existingSession) {
-        setSession(existingSession);
-        setStatusMessage('Wallet successfully connected.');
+    if (!latestSession && !allowDisconnect) {
+      return null;
+    }
+
+    setSession((currentSession) => {
+      if (!latestSession) {
+        if (currentSession) {
+          setStatusMessage('Wallet disconnected. Connect Freighter to manage notes.');
+        }
+
+        return null;
+      }
+
+      if (!currentSession || currentSession.address !== latestSession.address) {
+        setStatusMessage(`Wallet connected: ${formatAddress(latestSession.address)}.`);
+        setErrorMessage(null);
+        return latestSession;
+      }
+
+      return currentSession;
+    });
+    return latestSession;
+  }, []);
+
+  useEffect(() => {
+    setNotes([]);
+    setActivityFeed([]);
+    setHistoryNoteId(null);
+    setNoteHistory([]);
+    setEditingDraft(null);
+    setActiveTag('');
+    setActiveCategory('');
+  }, [session?.address]);
+
+  useEffect(() => {
+    void syncSessionFromWallet(true);
+
+    const handleVisibilitySync = () => {
+      if (document.visibilityState === 'visible') {
+        void syncSessionFromWallet();
       }
     };
 
-    void hydrateSession();
+    window.addEventListener('focus', handleVisibilitySync);
+    document.addEventListener('visibilitychange', handleVisibilitySync);
 
     return () => {
-      disposed = true;
+      window.removeEventListener('focus', handleVisibilitySync);
+      document.removeEventListener('visibilitychange', handleVisibilitySync);
     };
-  }, []);
+  }, [syncSessionFromWallet]);
 
   useEffect(() => {
     if (!session) {
@@ -283,11 +374,27 @@ export default function HomePage() {
     try {
       const connectedSession = await connectWallet();
       setSession(connectedSession);
-      setStatusMessage('Wallet successfully connected.');
+      setStatusMessage(`Wallet connected: ${formatAddress(connectedSession.address)}.`);
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Could not connect wallet.');
     } finally {
       setIsConnecting(false);
+    }
+  };
+
+  const handleRefreshWallet = async () => {
+    setIsRefreshingWallet(true);
+    setErrorMessage(null);
+
+    try {
+      const refreshedSession = await syncSessionFromWallet(true);
+      if (!refreshedSession && !session) {
+        setStatusMessage('No wallet session detected. Connect Freighter to continue.');
+      }
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Could not refresh wallet session.');
+    } finally {
+      setIsRefreshingWallet(false);
     }
   };
 
@@ -466,7 +573,9 @@ export default function HomePage() {
           <WalletConnect
             address={session?.address ?? null}
             isConnecting={isConnecting}
+            isRefreshing={isRefreshingWallet}
             onConnect={handleConnectWallet}
+            onRefresh={handleRefreshWallet}
             encryptionSecret={encryptionSecret}
             onEncryptionSecretChange={setEncryptionSecret}
           />
@@ -497,6 +606,7 @@ export default function HomePage() {
 
         <NoteList
           notes={visibleNotes}
+          activeAddressLabel={session ? formatAddress(session.address) : null}
           isLoading={isLoadingNotes}
           isMutating={isSubmitting}
           deletingNoteId={deletingNoteId}
