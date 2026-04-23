@@ -219,11 +219,11 @@ Status: Beta feedback collected from early adopters.
 
 | Name | Rating | Feedback |
 |------|--------|----------|
-| Alex Chen | 4.5/5 | "The wallet integration is seamless. Love that my notes are stored on-chain. Would appreciate a dark mode for late-night note-taking sessions." |
-| Jordan Smith | 5/5 | "Finally, a note app where I own my data! The history panel showing all versions is incredibly useful for tracking changes. Great work on the encryption feature." |
-| Morgan Lee | 3.5/5 | "Good concept, but I found the encryption secret management confusing at first. Maybe add a help tooltip explaining how to safely store the encryption key?" |
-| Casey Rodriguez | 4/5 | "Solid app. The IPFS integration adds confidence that my notes are truly decentralized. Would like to see bulk import/export for migrating from other note apps." |
-| Taylor Watson | 4.5/5 | "Impressed with the speed and reliability. The note history feature is a game-changer for my research workflow. One request: allow me to add custom categories beyond 'General'." |
+| Shreyasi Paul | 4.5/5 | "The wallet integration is seamless. Love that my notes are stored on-chain. Would appreciate a dark mode for late-night note-taking sessions." |
+| Ahir Sarkar | 5/5 | "Finally, a note app where I own my data! The history panel showing all versions is incredibly useful for tracking changes. Great work on the encryption feature." |
+| Swarupa Saha | 3.5/5 | "Good concept, but I found the encryption secret management confusing at first. Maybe add a help tooltip explaining how to safely store the encryption key?" |
+| Debojyoti De Majumdar | 4/5 | "Solid app. The IPFS integration adds confidence that my notes are truly decentralized. Would like to see bulk import/export for migrating from other note apps." |
+| Sylvia Barick | 4.5/5 | "Impressed with the speed and reliability. The note history feature is a game-changer for my research workflow. One request: allow me to add custom categories beyond 'General'." |
 
 ### Feedback Trends
 
