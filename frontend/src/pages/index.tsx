@@ -20,6 +20,11 @@ import { decryptNoteContent, encryptNoteContent } from '../services/encryptionSe
 import { fetchEncryptedPayloadFromIpfs, uploadEncryptedPayloadToIpfs } from '../services/ipfsService';
 import type { ActivityEvent, Note, NoteDraft, NoteHistoryEntry, WalletSession } from '../types/note';
 
+function looksLikeIpfsCid(value: string): boolean {
+  const normalized = value.trim();
+  return normalized.startsWith('cid-') || /^[a-zA-Z0-9]{46,}$/.test(normalized);
+}
+
 export default function HomePage() {
   const [session, setSession] = useState<WalletSession | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -48,7 +53,7 @@ export default function HomePage() {
         rawNotes.map(async (note) => {
           const cid = (note.contentCid || note.content || '').trim();
 
-          if (!cid) {
+          if (!cid || !looksLikeIpfsCid(cid)) {
             return note;
           }
 
@@ -303,17 +308,32 @@ export default function HomePage() {
 
     try {
       const encryptedPayload = await encryptNoteContent(session.address, encryptionSecret, draft.content);
-      const cid = await uploadEncryptedPayloadToIpfs(encryptedPayload);
+      let contentReference = draft.content;
+
+      try {
+        contentReference = await uploadEncryptedPayloadToIpfs(encryptedPayload);
+      } catch (uploadError) {
+        const uploadErrorMessage = uploadError instanceof Error ? uploadError.message : String(uploadError);
+
+        if (!uploadErrorMessage.toLowerCase().includes('ipfs upload url is not configured')) {
+          throw uploadError;
+        }
+      }
+
       const created = await createNote(session, {
         ...draft,
-        content: cid,
+        content: contentReference,
       });
       if (!created) {
         setErrorMessage('A note with this ID already exists.');
         return;
       }
 
-      setStatusMessage(`Note #${draft.id} created on-chain with encrypted IPFS content.`);
+      setStatusMessage(
+        contentReference === draft.content
+          ? `Note #${draft.id} created on-chain without IPFS.`
+          : `Note #${draft.id} created on-chain with encrypted IPFS content.`
+      );
       await refreshNotesWithRetry(session, draft.id);
       await loadActivityFeed(session);
 
@@ -344,17 +364,28 @@ export default function HomePage() {
 
     try {
       const encryptedPayload = await encryptNoteContent(session.address, encryptionSecret, draft.content);
-      const cid = await uploadEncryptedPayloadToIpfs(encryptedPayload);
+      let contentReference = draft.content;
+
+      try {
+        contentReference = await uploadEncryptedPayloadToIpfs(encryptedPayload);
+      } catch (uploadError) {
+        const uploadErrorMessage = uploadError instanceof Error ? uploadError.message : String(uploadError);
+
+        if (!uploadErrorMessage.toLowerCase().includes('ipfs upload url is not configured')) {
+          throw uploadError;
+        }
+      }
+
       const updated = await updateNote(session, {
         ...draft,
-        content: cid,
+        content: contentReference,
       });
       if (!updated) {
         setErrorMessage('Unable to update note. It may not exist anymore.');
         return;
       }
 
-      setStatusMessage(`Note #${draft.id} updated.`);
+      setStatusMessage(contentReference === draft.content ? `Note #${draft.id} updated without IPFS.` : `Note #${draft.id} updated.`);
       setEditingDraft(null);
       await refreshNotesWithRetry(session, draft.id);
       await loadActivityFeed(session);

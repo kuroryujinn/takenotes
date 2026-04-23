@@ -20,6 +20,11 @@ function formatTimestamp(unixTimestamp: number): string {
   return new Date(unixTimestamp * 1000).toLocaleString();
 }
 
+function looksLikeIpfsCid(value: string): boolean {
+  const normalized = value.trim();
+  return normalized.startsWith('cid-') || /^[a-zA-Z0-9]{46,}$/.test(normalized);
+}
+
 export default function NoteList({
   notes,
   isLoading,
@@ -49,7 +54,9 @@ export default function NoteList({
               <strong>{note.isPinned ? 'Pinned' : 'Standard'}</strong>
               <span>Priority: {note.priority}</span>
               <span>Category: {note.category || 'General'}</span>
-              {note.contentCid ? <span>CID: {note.contentCid.slice(0, 16)}...</span> : null}
+              {note.contentCid && looksLikeIpfsCid(note.contentCid) ? (
+                <span>CID: {note.contentCid.slice(0, 16)}...</span>
+              ) : null}
             </div>
             <p>{note.content}</p>
             {note.tags.length > 0 ? (

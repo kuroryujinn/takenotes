@@ -1,13 +1,20 @@
 const IPFS_UPLOAD_URL = process.env.REACT_APP_IPFS_UPLOAD_URL || '';
 const IPFS_UPLOAD_TOKEN = process.env.REACT_APP_IPFS_UPLOAD_TOKEN || '';
 const IPFS_GATEWAY = process.env.REACT_APP_IPFS_GATEWAY || 'https://ipfs.io/ipfs';
+const CID_SAFE_PATTERN = /^[a-zA-Z0-9]+$/;
 
 interface PinataResponse {
   IpfsHash?: string;
 }
 
 function sanitizeCid(value: string): string {
-  return value.replace(/^ipfs:\/\//i, '').replace(/^\/ipfs\//i, '').trim();
+  const cid = value.replace(/^ipfs:\/\//i, '').replace(/^\/ipfs\//i, '').trim();
+
+  if (!cid || !CID_SAFE_PATTERN.test(cid)) {
+    return '';
+  }
+
+  return cid;
 }
 
 export async function uploadEncryptedPayloadToIpfs(payload: string): Promise<string> {

@@ -26,6 +26,14 @@ This project is intentionally practical: it is small enough to study end-to-end,
 - Timestamps captured from ledger time
 - Optional cross-contract logging of note activity
 - Backward compatibility support for legacy deployments (`add_note`)
+- Environment-based network switching (testnet/mainnet profiles)
+- Client-side input sanitization and note field bounds
+
+## Target Users
+
+- Developers and early adopters exploring decentralized personal knowledge tools
+- Privacy-conscious users who prefer wallet-based identity over email/password auth
+- Teams experimenting with Soroban-powered application patterns
 
 ## Architecture
 
@@ -145,6 +153,7 @@ Create `frontend/.env` (or `.env.local`) with:
 
 ```bash
 REACT_APP_CONTRACT_ID=<deployed_contract_id>
+REACT_APP_STELLAR_NETWORK=testnet
 REACT_APP_SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
 REACT_APP_NETWORK_PASSPHRASE=Test SDF Network ; September 2015
 REACT_APP_IPFS_UPLOAD_URL=https://api.pinata.cloud/pinning/pinJSONToIPFS
@@ -153,6 +162,16 @@ REACT_APP_IPFS_GATEWAY=https://ipfs.io/ipfs
 ```
 
 Phase 3 uses client-side encryption in the browser and stores only IPFS CIDs on-chain.
+
+For mainnet, update the following variables:
+
+```bash
+REACT_APP_STELLAR_NETWORK=mainnet
+REACT_APP_SOROBAN_RPC_URL=<mainnet_soroban_rpc>
+REACT_APP_NETWORK_PASSPHRASE=Public Global Stellar Network ; September 2015
+REACT_APP_CONTRACT_ID=<mainnet_contract_id>
+REACT_APP_LOGGER_CONTRACT_ID=<mainnet_logger_id>
+```
 
 ### 3) Production build (frontend)
 
@@ -169,6 +188,154 @@ npm run build
 	- delete
 
 Frontend currently uses the default CRA/Jest setup and can be extended with integration tests for wallet and contract interaction paths.
+
+## User Onboarding (Level 5)
+
+- Google Form (required fields):
+	- Name
+	- Email
+	- Wallet Address
+	- Product Rating (1-5)
+	- Open feedback
+- Google Form link: `TODO_ADD_FORM_LINK`
+- Exported response sheet (CSV/XLSX): `TODO_ADD_SHEET_LINK`
+- User validation dataset template (CSV):
+
+```csv
+user_alias,wallet_address,action_performed,tx_hash,timestamp_utc
+```
+
+- Feedback dataset template (CSV):
+
+```csv
+name,email,wallet_address,product_rating,feedback
+```
+
+## User Feedback Summary
+
+Status: pending real-user collection.
+
+Planned summary format:
+
+- Total responses
+- Average rating
+- Most common friction points
+- Requested improvements
+
+## Improvement Implemented From Feedback Loop
+
+Implemented improvement in this iteration:
+
+- Added stronger form input sanitization and limits for title/content/category/tags.
+- Added runtime-config module for environment-based network switching (testnet/mainnet) to reduce hardcoded deployment coupling.
+
+Code evidence:
+
+- `frontend/src/components/NoteForm.tsx`
+- `frontend/src/utils/sanitize.ts`
+- `frontend/src/config/runtimeConfig.ts`
+
+Commit link(s): `TODO_ADD_COMMIT_LINKS`
+
+Verification log template:
+
+```text
+Date (UTC):
+Environment: testnet/mainnet
+Frontend commit:
+Contract commit:
+Frontend tests:
+Contract tests:
+E2E wallet flow:
+Transactions observed:
+Result: pass/fail
+Notes:
+```
+
+CI gate:
+
+- `.github/workflows/ci.yml` runs contract tests and frontend tests/build on push and PR.
+
+## Mainnet Transition Plan
+
+### Environment Configuration Changes
+
+- Switch `REACT_APP_STELLAR_NETWORK` to `mainnet`.
+- Point `REACT_APP_SOROBAN_RPC_URL` to a production Soroban RPC endpoint.
+- Set `REACT_APP_NETWORK_PASSPHRASE` to Stellar public network passphrase.
+- Replace contract IDs with mainnet deployments.
+
+### Contract/API Switching Strategy
+
+- Frontend services read contract IDs and endpoints from environment variables.
+- No contract IDs are hardcoded in component code.
+- IPFS gateway/upload endpoints are environment-driven.
+
+### Security Improvements Before Launch
+
+- Keep wallet signing in Freighter only; never expose private keys.
+- Enforce input sanitization and size limits (already added in frontend form layer).
+- Add rate limiting/auth in any future backend API proxy before production traffic.
+- Keep upload tokens in deployment secrets, never in source control.
+
+### Deployment Checklist
+
+- Build and test smart contracts against mainnet-compatible release artifacts.
+- Deploy contracts and update environment variables.
+- Run smoke tests for create/update/delete + history + activity feed.
+- Verify observability (RPC errors, wallet signing failures, IPFS upload failures).
+- Keep rollback path ready:
+	- Previous frontend deployment artifact
+	- Previous known-good contract IDs
+	- Environment-variable rollback procedure
+
+### Release and Rollback Runbook (Inline)
+
+Release preconditions:
+
+- CI green on latest commit.
+- Frontend tests pass.
+- Contract tests pass.
+- Environment values verified for target network.
+
+Manual release steps:
+
+1. Build contracts.
+2. Deploy contracts to target network.
+3. Update frontend env values for network + contract IDs.
+4. Build frontend artifact.
+5. Deploy frontend artifact.
+6. Run smoke flow (connect, create, update, delete).
+
+Rollback steps:
+
+1. Redeploy previous known-good frontend artifact.
+2. Restore previous known-good env values.
+3. Re-point to previous known-good contract IDs.
+4. Re-run smoke flow to confirm recovery.
+
+Recovery objective: less than 30 minutes.
+
+### Risks Before Mainnet Launch
+
+- Real-user onboarding evidence is still pending and required for final sign-off.
+- Cost profile (gas + infra) still needs production load sampling.
+- End-to-end wallet/network mismatch handling should be validated with multiple wallet versions.
+
+## Level 5 Tracking (Single-README Mode)
+
+Use this checklist directly in this README.
+
+- [x] Functional MVP (contract + frontend flow implemented)
+- [x] Mainnet-ready runtime config + validation
+- [x] Security hardening (frontend sanitization + contract validation)
+- [x] CI test gates for frontend and contracts
+- [x] Deployment + rollback process documented
+- [ ] 5+ real users onboarded on testnet
+- [ ] Google Form responses exported and cleaned
+- [ ] Feedback analysis completed from real responses
+- [ ] At least one user-feedback-driven improvement linked with commits
+- [ ] Final evidence links filled (form, sheet, commit links)
 
 ## Known Compatibility Notes
 

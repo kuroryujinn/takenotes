@@ -11,6 +11,18 @@ fn tags(env: &Env, items: &[&str]) -> soroban_sdk::Vec<String> {
     out
 }
 
+fn repeated_tag_list(env: &Env, count: u32) -> soroban_sdk::Vec<String> {
+    let mut out = soroban_sdk::Vec::new(env);
+    let mut idx = 0;
+
+    while idx < count {
+        out.push_back(String::from_str(env, "x"));
+        idx += 1;
+    }
+
+    out
+}
+
 #[test]
 fn test_crud_notes() {
     let env = Env::default();
@@ -162,4 +174,79 @@ fn test_logger_event_payload_matches_note_actions() {
 
     assert!(created.timestamp <= updated.timestamp);
     assert!(updated.timestamp <= deleted.timestamp);
+}
+
+#[test]
+fn test_rejects_invalid_note_inputs() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let contract_id = env.register(TakeNotesContract, ());
+    let client = TakeNotesContractClient::new(&env, &contract_id);
+
+    let user = Address::generate(&env);
+
+    let empty_content = client.create_note(
+        &user,
+        &11u32,
+        &String::from_str(&env, "valid"),
+        &String::from_str(&env, ""),
+        &tags(&env, &["ok"]),
+        &String::from_str(&env, "General"),
+        &false,
+        &1u32,
+    );
+    assert!(!empty_content);
+
+    let too_many_tags = client.create_note(
+        &user,
+        &12u32,
+        &String::from_str(&env, "valid"),
+        &String::from_str(&env, "bafybeib2e6z3validcid"),
+        &repeated_tag_list(&env, 11),
+        &String::from_str(&env, "General"),
+        &false,
+        &1u32,
+    );
+    assert!(!too_many_tags);
+
+    let invalid_priority = client.create_note(
+        &user,
+        &13u32,
+        &String::from_str(&env, "valid"),
+        &String::from_str(&env, "bafybeib2e6z3validcid"),
+        &tags(&env, &["ok"]),
+        &String::from_str(&env, "General"),
+        &false,
+        &512u32,
+    );
+    assert!(!invalid_priority);
+
+    let valid = client.create_note(
+        &user,
+        &14u32,
+        &String::from_str(&env, "valid"),
+        &String::from_str(&env, "bafybeib2e6z3validcid"),
+        &tags(&env, &["ok"]),
+        &String::from_str(&env, "General"),
+        &false,
+        &5u32,
+    );
+    assert!(valid);
+
+    let invalid_update = client.update_note(
+        &user,
+        &14u32,
+        &String::from_str(&env, "updated"),
+        &String::from_str(&env, ""),
+        &tags(&env, &["ok"]),
+        &String::from_str(&env, "General"),
+        &false,
+        &5u32,
+    );
+    assert!(!invalid_update);
+
+    let notes = client.get_notes(&user);
+    assert_eq!(notes.len(), 1);
+    assert_eq!(notes.get(0).unwrap().id, 14);
 }

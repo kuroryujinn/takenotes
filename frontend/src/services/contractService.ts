@@ -9,7 +9,6 @@ import {
   Address,
   BASE_FEE,
   Contract,
-  Networks,
   Transaction,
   TransactionBuilder,
   nativeToScVal,
@@ -18,14 +17,34 @@ import {
   xdr,
 } from '@stellar/stellar-sdk';
 import type { ActivityEvent, Note, NoteDraft, NoteHistoryEntry, WalletSession } from '../types/note';
+import {
+  getRuntimeConfig,
+  validateRuntimeConfig,
+} from '../config/runtimeConfig';
 
-const CONTRACT_ID = process.env.REACT_APP_CONTRACT_ID || '';
-const LOGGER_CONTRACT_ID = process.env.REACT_APP_LOGGER_CONTRACT_ID || '';
-const RPC_URL = process.env.REACT_APP_SOROBAN_RPC_URL || 'https://soroban-testnet.stellar.org';
-const NETWORK_PASSPHRASE = process.env.REACT_APP_NETWORK_PASSPHRASE || Networks.TESTNET;
+const RUNTIME_CONFIG = getRuntimeConfig();
+const CONTRACT_ID = RUNTIME_CONFIG.contractId;
+const LOGGER_CONTRACT_ID = RUNTIME_CONFIG.loggerContractId;
+const RPC_URL = RUNTIME_CONFIG.rpcUrl;
+const NETWORK_PASSPHRASE = RUNTIME_CONFIG.networkPassphrase;
 
-if (!CONTRACT_ID) {
-  console.warn('Warning: REACT_APP_CONTRACT_ID is not defined in the .env file.');
+const runtimeConfigErrors = validateRuntimeConfig(RUNTIME_CONFIG);
+if (runtimeConfigErrors.length > 0) {
+  console.warn(`Runtime configuration issues: ${runtimeConfigErrors.join(' ')}`);
+}
+
+function assertRuntimeConfigReady(): void {
+  if (runtimeConfigErrors.length > 0) {
+    throw new Error(`Runtime configuration invalid: ${runtimeConfigErrors.join(' ')}`);
+  }
+}
+
+function assertNetworkMatch(networkPassphrase: string): void {
+  if (networkPassphrase !== NETWORK_PASSPHRASE) {
+    throw new Error(
+      `Wallet network mismatch. Wallet is on "${networkPassphrase}", app expects "${NETWORK_PASSPHRASE}".`
+    );
+  }
 }
 
 function createServer(): rpc.Server {
@@ -109,6 +128,11 @@ function toStringArray(value: unknown): string[] {
     .filter((item) => item.length > 0);
 }
 
+function looksLikeIpfsCid(value: string): boolean {
+  const normalized = value.trim();
+  return normalized.startsWith('cid-') || /^[a-zA-Z0-9]{46,}$/.test(normalized);
+}
+
 function isMissingFunctionError(error: unknown, methodName: string): boolean {
   const message = toErrorMessage(error).toLowerCase();
   const escapedName = methodName.toLowerCase();
@@ -130,6 +154,10 @@ function isSignatureMismatchError(error: unknown, methodName: string): boolean {
     message.includes(target) &&
     (message.includes('argument') ||
       message.includes('arity') ||
+      message.includes('mismatchingparameterlen') ||
+      message.includes('parameterlen') ||
+      message.includes('unexpectedsize') ||
+      message.includes('wrong number of arguments') ||
       message.includes('invalid input') ||
       message.includes('type mismatch') ||
       message.includes('xdr'))
@@ -139,13 +167,15 @@ function isSignatureMismatchError(error: unknown, methodName: string): boolean {
 function toNote(raw: unknown): Note {
   const value = normalizeRecord(raw);
   const contentCid = toText(value.content_cid, toText(value.content, ''));
+  const isEncrypted = looksLikeIpfsCid(contentCid);
+  const content = toText(value.content, isEncrypted ? '' : contentCid);
 
   return {
     id: toNumber(value.id, 0),
     title: toText(value.title, ''),
-    content: toText(value.content, toText(value.text, '')),
+    content,
     contentCid,
-    isEncrypted: contentCid.length > 0,
+    isEncrypted,
     tags: toStringArray(value.tags),
     category: toText(value.category, 'General'),
     isPinned: toBoolean(value.is_pinned, false),
@@ -272,6 +302,9 @@ async function invokeWrite(
   method: string,
   args: xdr.ScVal[]
 ): Promise<unknown> {
+  assertRuntimeConfigReady();
+  assertNetworkMatch(session.networkPassphrase);
+
   const server = createServer();
   const preparedTx = await buildInvocationTx(session.address, session.networkPassphrase, method, args);
 
@@ -297,6 +330,9 @@ async function invokeRead(
   method: string,
   args: xdr.ScVal[]
 ): Promise<unknown> {
+  assertRuntimeConfigReady();
+  assertNetworkMatch(session.networkPassphrase);
+
   return invokeReadFromContract(session, contract(), method, args);
 }
 
@@ -330,6 +366,8 @@ async function invokeReadFromContract(
 }
 
 export async function getWalletSession(): Promise<WalletSession | null> {
+  assertRuntimeConfigReady();
+
   const connectedResult = await isConnected();
   if (connectedResult.error || !connectedResult.isConnected) {
     return null;
@@ -340,20 +378,27 @@ export async function getWalletSession(): Promise<WalletSession | null> {
     return null;
   }
 
+  const networkPassphrase = await getNetworkPassphrase();
+  assertNetworkMatch(networkPassphrase);
+
   return {
     address: addressResult.address,
-    networkPassphrase: await getNetworkPassphrase(),
+    networkPassphrase,
   };
 }
 
 export async function connectWallet(): Promise<WalletSession> {
+  assertRuntimeConfigReady();
+
   try {
     assertFreighterCall(await isConnected());
     const access = assertFreighterCall(await requestAccess());
+    const networkPassphrase = await getNetworkPassphrase();
+    assertNetworkMatch(networkPassphrase);
 
     return {
       address: access.address,
-      networkPassphrase: await getNetworkPassphrase(),
+      networkPassphrase,
     };
   } catch (error) {
     throw new Error(toErrorMessage(error));

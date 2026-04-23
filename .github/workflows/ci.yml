@@ -35,6 +35,9 @@ jobs:
       - name: Install Dependencies
         working-directory: ./frontend
         run: npm install
+      - name: Run Frontend Tests
+        working-directory: ./frontend
+        run: CI=true npm test -- --watchAll=false --silent
       - name: Build Frontend
         working-directory: ./frontend
         run: npm run build

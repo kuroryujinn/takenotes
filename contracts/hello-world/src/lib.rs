@@ -49,6 +49,53 @@ pub enum DataKey {
     Logger,
 }
 
+const MAX_TITLE_LEN: u32 = 120;
+const MAX_CONTENT_CID_LEN: u32 = 256;
+const MAX_CATEGORY_LEN: u32 = 40;
+const MAX_TAG_LEN: u32 = 24;
+const MAX_TAG_COUNT: u32 = 10;
+const MAX_PRIORITY: u32 = 255;
+
+fn is_valid_note_input(
+    title: &String,
+    content_cid: &String,
+    tags: &Vec<String>,
+    category: &String,
+    priority: u32,
+) -> bool {
+    if title.len() > MAX_TITLE_LEN {
+        return false;
+    }
+
+    if content_cid.len() == 0 || content_cid.len() > MAX_CONTENT_CID_LEN {
+        return false;
+    }
+
+    if category.len() == 0 || category.len() > MAX_CATEGORY_LEN {
+        return false;
+    }
+
+    if tags.len() > MAX_TAG_COUNT {
+        return false;
+    }
+
+    let mut idx: u32 = 0;
+    while idx < tags.len() {
+        if let Some(tag) = tags.get(idx) {
+            if tag.len() == 0 || tag.len() > MAX_TAG_LEN {
+                return false;
+            }
+        }
+        idx += 1;
+    }
+
+    if priority > MAX_PRIORITY {
+        return false;
+    }
+
+    true
+}
+
 fn find_note_index(notes: &Vec<Note>, id: u32) -> Option<u32> {
     let mut idx: u32 = 0;
     while idx < notes.len() {
@@ -112,6 +159,10 @@ impl TakeNotesContract {
     ) -> bool {
         user.require_auth();
 
+        if !is_valid_note_input(&title, &content_cid, &tags, &category, priority) {
+            return false;
+        }
+
         let key = DataKey::Notes(user.clone());
         let mut notes: Vec<Note> = env.storage().instance().get(&key).unwrap_or(Vec::new(&env));
 
@@ -172,6 +223,10 @@ impl TakeNotesContract {
         priority: u32,
     ) -> bool {
         user.require_auth();
+
+        if !is_valid_note_input(&title, &content_cid, &tags, &category, priority) {
+            return false;
+        }
 
         let key = DataKey::Notes(user.clone());
         let mut notes: Vec<Note> = env.storage().instance().get(&key).unwrap_or(Vec::new(&env));

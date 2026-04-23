@@ -67,6 +67,10 @@ const session: WalletSession = {
   networkPassphrase: 'Test SDF Network ; September 2015',
 };
 
+function looksLikeIpfsCid(value: string): boolean {
+  return /^[a-zA-Z0-9]{46,}$/.test(value.trim());
+}
+
 describe('HomePage interactions', () => {
   let notesState: Note[];
   let activityState: ActivityEvent[];
@@ -86,14 +90,15 @@ describe('HomePage interactions', () => {
     mockedDecryptNoteContent.mockResolvedValue('Decrypted content');
 
     mockedCreateNote.mockImplementation(async (_sessionArg, draft) => {
+      const isEncrypted = looksLikeIpfsCid(draft.content);
       notesState = [
         ...notesState,
         {
           id: draft.id,
           title: draft.title,
-          content: '',
+          content: isEncrypted ? '' : draft.content,
           contentCid: draft.content,
-          isEncrypted: true,
+          isEncrypted,
           tags: draft.tags,
           category: draft.category,
           isPinned: draft.isPinned,
@@ -106,12 +111,15 @@ describe('HomePage interactions', () => {
     });
 
     mockedUpdateNote.mockImplementation(async (_sessionArg, draft) => {
+      const isEncrypted = looksLikeIpfsCid(draft.content);
       notesState = notesState.map((note) =>
         note.id === draft.id
           ? {
               ...note,
               title: draft.title,
+              content: isEncrypted ? '' : draft.content,
               contentCid: draft.content,
+              isEncrypted,
               tags: draft.tags,
               category: draft.category,
               isPinned: draft.isPinned,
@@ -173,6 +181,37 @@ describe('HomePage interactions', () => {
 
     expect(await screen.findByText(/no matching notes found/i)).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'First Note Updated' })).not.toBeInTheDocument();
+  });
+
+  test('creates a note without ipfs when upload is unavailable', async () => {
+    const user = userEvent;
+    mockedUploadEncryptedPayloadToIpfs.mockRejectedValueOnce(
+      new Error('IPFS upload URL is not configured. Set REACT_APP_IPFS_UPLOAD_URL.')
+    );
+
+    render(<HomePage />);
+
+    await screen.findByText(/wallet successfully connected/i);
+
+    await user.type(screen.getByLabelText(/encryption secret/i), 'my-secret');
+    await user.type(screen.getByLabelText(/note id/i), '7');
+    await user.type(screen.getByLabelText(/^title$/i), 'Offline Ready');
+    await user.type(screen.getByLabelText(/content/i), 'Plaintext content for testnet users');
+    await user.type(screen.getByLabelText(/priority/i), '1');
+
+    await user.click(screen.getByRole('button', { name: /create note/i }));
+
+    expect(await screen.findByRole('heading', { name: 'Offline Ready' })).toBeInTheDocument();
+    expect(await screen.findByText('Plaintext content for testnet users')).toBeInTheDocument();
+    expect(mockedCreateNote).toHaveBeenCalledWith(
+      session,
+      expect.objectContaining({
+        id: 7,
+        title: 'Offline Ready',
+        content: 'Plaintext content for testnet users',
+      })
+    );
+    expect(screen.queryByText(/ipfs upload url is not configured/i)).not.toBeInTheDocument();
   });
 
   test('renders activity feed and note history from contract data', async () => {

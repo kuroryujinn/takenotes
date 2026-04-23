@@ -1,5 +1,11 @@
 import React, { FormEvent, useEffect, useState } from 'react';
 import type { NoteDraft } from '../types/note';
+import {
+  NOTE_LIMITS,
+  sanitizeMultilineText,
+  sanitizeSingleLineText,
+  sanitizeTags,
+} from '../utils/sanitize';
 
 interface NoteFormProps {
   mode: 'create' | 'update';
@@ -60,8 +66,19 @@ export default function NoteForm({
       return;
     }
 
-    if (!content.trim()) {
+    const sanitizedTitle = sanitizeSingleLineText(title).slice(0, NOTE_LIMITS.titleMaxLength);
+    const sanitizedContent = sanitizeMultilineText(content);
+    const sanitizedCategory =
+      sanitizeSingleLineText(category).slice(0, NOTE_LIMITS.categoryMaxLength) || 'General';
+    const sanitizedTags = sanitizeTags(tagsValue);
+
+    if (!sanitizedContent) {
       setLocalError('Note content cannot be empty.');
+      return;
+    }
+
+    if (sanitizedContent.length > NOTE_LIMITS.contentMaxLength) {
+      setLocalError(`Content must be ${NOTE_LIMITS.contentMaxLength} characters or less.`);
       return;
     }
 
@@ -71,17 +88,12 @@ export default function NoteForm({
       return;
     }
 
-    const tags = tagsValue
-      .split(',')
-      .map((tag) => tag.trim())
-      .filter((tag) => tag.length > 0);
-
     await onSubmit({
       id: parsedId,
-      title: title.trim(),
-      content: content.trim(),
-      tags,
-      category: category.trim() || 'General',
+      title: sanitizedTitle,
+      content: sanitizedContent,
+      tags: sanitizedTags,
+      category: sanitizedCategory,
       isPinned,
       priority: parsedPriority,
     });
