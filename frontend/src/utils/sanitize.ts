@@ -6,21 +6,38 @@ export const NOTE_LIMITS = {
   maxTags: 10,
 } as const;
 
-const CONTROL_CHARS_EXCEPT_NEWLINE = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g;
+function removeControlCharsExceptNewline(input: string, replacement = ''): string {
+  let output = '';
+
+  for (let idx = 0; idx < input.length; idx += 1) {
+    const char = input[idx];
+    const code = char.charCodeAt(0);
+    const isControl = code <= 0x1f || code === 0x7f;
+
+    if (isControl && code !== 0x0a) {
+      output += replacement;
+      continue;
+    }
+
+    output += char;
+  }
+
+  return output;
+}
 
 export function sanitizeSingleLineText(input: string): string {
-  return input
-    .replace(/\r\n/g, '\n')
-    .replace(CONTROL_CHARS_EXCEPT_NEWLINE, ' ')
+  const normalized = input.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+  return removeControlCharsExceptNewline(normalized, ' ')
     .replace(/[\r\n]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
 
 export function sanitizeMultilineText(input: string): string {
-  return input
-    .replace(CONTROL_CHARS_EXCEPT_NEWLINE, '')
-    .replace(/\r\n/g, '\n')
+  const normalized = input.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+  return removeControlCharsExceptNewline(normalized)
     .replace(/\n{3,}/g, '\n\n')
     .trim();
 }
