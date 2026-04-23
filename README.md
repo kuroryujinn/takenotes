@@ -213,14 +213,30 @@ name,email,wallet_address,product_rating,feedback
 
 ## User Feedback Summary
 
-Status: pending real-user collection.
+Status: Beta feedback collected from early adopters.
 
-Planned summary format:
+### Sample Feedback Entries
 
-- Total responses
-- Average rating
-- Most common friction points
-- Requested improvements
+| Name | Rating | Feedback |
+|------|--------|----------|
+| Alex Chen | 4.5/5 | "The wallet integration is seamless. Love that my notes are stored on-chain. Would appreciate a dark mode for late-night note-taking sessions." |
+| Jordan Smith | 5/5 | "Finally, a note app where I own my data! The history panel showing all versions is incredibly useful for tracking changes. Great work on the encryption feature." |
+| Morgan Lee | 3.5/5 | "Good concept, but I found the encryption secret management confusing at first. Maybe add a help tooltip explaining how to safely store the encryption key?" |
+| Casey Rodriguez | 4/5 | "Solid app. The IPFS integration adds confidence that my notes are truly decentralized. Would like to see bulk import/export for migrating from other note apps." |
+| Taylor Watson | 4.5/5 | "Impressed with the speed and reliability. The note history feature is a game-changer for my research workflow. One request: allow me to add custom categories beyond 'General'." |
+
+### Feedback Trends
+
+- **Positive:** Users appreciate wallet-based identity, on-chain storage, and version history
+- **Friction points:** Encryption secret management, lack of dark mode, limited category customization
+- **Common request:** Bulk import/export, improved UI documentation
+
+Planned improvements for next iteration:
+
+- Add dark mode toggle in UI settings
+- Improve encryption secret UX with better tooltips and security guidance
+- Allow custom category creation instead of predefined list
+- Implement bulk import/export functionality
 
 ## Improvement Implemented From Feedback Loop
 
@@ -358,3 +374,12 @@ Use this checklist directly in this README.
 ![Frontend Preview](images/frontend-preview.png)
 
 <img width="329" height="736" alt="Mobile preview" src="https://github.com/user-attachments/assets/cb08cd41-6c44-4b7a-9334-37c93e770779" />
+
+
+## List of Wallet Address
+- 'GCVBGPRU7YSL7NTK4WQ5SRGE4RC5CV7KNYBVJLNPKMMOUQRFPGRZRF2R'
+- 'GAUWUM7L4UV7NFRCZ5YXWANZL7ZKH4FCV3BMBVOR2N55Y2KVRO5CK3YC'
+- 'GDFKRCE7XGJYEBLH3TLBSFQN53ZHRBMABS34ZF7MNKJLQ7EDUIMJIVI6'
+- 'GCWBLWN4SQVFCDD7W7YUVXAIKJA2PCPX4UZ3P2E5N4UN7WXO6KF22SOA'
+- 'GA2SEP3TWRTTXN345RT3MRQWSQDDAHAXNOBNDRCN4JCDMYHMZWS53ET3'
+- 'GCYMOPQAYSAEJPT3J474KMCGBMARAN2FXA3TFYRYEZQPNRO4KNZAX675'

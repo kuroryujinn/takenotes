@@ -96,6 +96,43 @@ export default function HomePage() {
     [encryptionSecret]
   );
 
+  const hydrateReadableHistoryEntries = useCallback(
+    async (rawHistory: NoteHistoryEntry[], activeSession: WalletSession): Promise<NoteHistoryEntry[]> => {
+      return Promise.all(
+        rawHistory.map(async (entry) => {
+          const cid = (entry.content || '').trim();
+
+          if (!cid || !looksLikeIpfsCid(cid)) {
+            return entry;
+          }
+
+          if (!encryptionSecret.trim()) {
+            return {
+              ...entry,
+              content: '[Encrypted version. Enter your encryption secret to decrypt.]',
+            };
+          }
+
+          try {
+            const encryptedPayload = await fetchEncryptedPayloadFromIpfs(cid);
+            const decryptedContent = await decryptNoteContent(activeSession.address, encryptionSecret, encryptedPayload);
+
+            return {
+              ...entry,
+              content: decryptedContent,
+            };
+          } catch {
+            return {
+              ...entry,
+              content: '[Unable to decrypt this version. Verify your encryption secret.]',
+            };
+          }
+        })
+      );
+    },
+    [encryptionSecret]
+  );
+
   const loadNotes = useCallback(async (activeSession: WalletSession) => {
     const requestId = notesRequestIdRef.current + 1;
     notesRequestIdRef.current = requestId;
@@ -161,12 +198,13 @@ export default function HomePage() {
 
     try {
       const history = await fetchNoteHistory(activeSession, noteId);
+      const readableHistory = await hydrateReadableHistoryEntries(history, activeSession);
 
       if (requestId !== historyRequestIdRef.current) {
         return;
       }
 
-      setNoteHistory(history);
+      setNoteHistory(readableHistory);
     } catch {
       if (requestId !== historyRequestIdRef.current) {
         return;
@@ -180,7 +218,7 @@ export default function HomePage() {
 
       setIsLoadingNoteHistory(false);
     }
-  }, []);
+  }, [hydrateReadableHistoryEntries]);
 
   const refreshNotesWithRetry = useCallback(
     async (activeSession: WalletSession, expectedNoteId?: number) => {
