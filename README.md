@@ -217,13 +217,13 @@ Status: Beta feedback collected from early adopters.
 
 ### Collected Feedback
 
-| Timestamp | Name | Email | User Wallet Address | Feedback (What points you liked about the app) | Feedback (Features to improve) |
+| Timestamp | Name | Email | User Wallet Address | Feedback (What points you liked about the app) | Feedback (Features to improve) | Commit ID |
 |---|---|---|---|---|---|
-| 4/27/2026 19:18:46 | Sylvia Barick | taniabarick15@gmail.com | GDWXGQHM3RLUMDUJOMWYYLRZCHHC446Y4B4MG6OVHWYMATIIV2D72MXG | 5 | active wallet updation |
-| 4/27/2026 20:15:13 | Shreyasi Paul | shreyasi.paul.net@gmail.com | GBOODSECIOUWR4ABDT5AINWH6EXEAPH7NIHS7ITMZISNESMJVMGLWUZT | very good ui, easy to use | add dark mode |
-| 4/27/2026 19:37:14 | Debdeepa Dutta | debdeepadutta61@gmail.com | GCFVKT5EG2ZZWZSUIBS6LW7Z6C3R73CT2DX37CATP64WL2I32AOLJTPG |  | formatting issues when pasting notes |
-| 4/28/2026 15:30:02 | Swarupa Saha | swarupasaha78@gmail.com | GBF4KEPCUXPP6GIEI4ZO2S4R272STYUMHGLTOCV3HTABEM6GBFOG2XTY | The app is very easy to use. | The history button is not working. |
-| 4/29/2026 4:43:19 | Ahir Sarkar | ahirsarkar2022@gmail.com | GAXSR67TDMZZMIXVEVH3B75DHG46KCRIIYQ6PY3KW3N6HCA6GMKFOYEO | great app | ui |
+| 4/27/2026 19:18:46 | Sylvia Barick | taniabarick15@gmail.com | GDWXGQHM3RLUMDUJOMWYYLRZCHHC446Y4B4MG6OVHWYMATIIV2D72MXG | 5 | active wallet updation | 626d5fc7aae121525fafc35b442e3944265762c8 |
+| 4/27/2026 20:15:13 | Shreyasi Paul | shreyasi.paul.net@gmail.com | GBOODSECIOUWR4ABDT5AINWH6EXEAPH7NIHS7ITMZISNESMJVMGLWUZT | very good ui, easy to use | add dark mode | 626d5fc7aae121525fafc35b442e3944265762c8 |
+| 4/27/2026 19:37:14 | Debdeepa Dutta | debdeepadutta61@gmail.com | GCFVKT5EG2ZZWZSUIBS6LW7Z6C3R73CT2DX37CATP64WL2I32AOLJTPG |  | formatting issues when pasting notes | 
+| 4/28/2026 15:30:02 | Swarupa Saha | swarupasaha78@gmail.com | GBF4KEPCUXPP6GIEI4ZO2S4R272STYUMHGLTOCV3HTABEM6GBFOG2XTY | The app is very easy to use. | The history button is not working. | 626d5fc7aae121525fafc35b442e3944265762c8 |
+| 4/29/2026 4:43:19 | Ahir Sarkar | ahirsarkar2022@gmail.com | GAXSR67TDMZZMIXVEVH3B75DHG46KCRIIYQ6PY3KW3N6HCA6GMKFOYEO | great app | ui | 626d5fc7aae121525fafc35b442e3944265762c8 |
 
 ### Feedback Trends
 
