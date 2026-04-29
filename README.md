@@ -220,7 +220,7 @@ Status: Beta feedback collected from early adopters.
 [Google Sheets](https://docs.google.com/spreadsheets/d/1z5n-C7riXzj6b8HdLrdKORbvGSxRqC6W1sHUBKGPbvI/edit?resourcekey=&gid=2080654632#gid=2080654632)
 
 | Timestamp | Name | Email | User Wallet Address | Feedback (What points you liked about the app) | Feedback (Features to improve) | Commit ID |
-|---|---|---|---|---|---|
+|---|---|---|---|---|---|---|
 | 4/27/2026 19:18:46 | Sylvia Barick | taniabarick15@gmail.com | GDWXGQHM3RLUMDUJOMWYYLRZCHHC446Y4B4MG6OVHWYMATIIV2D72MXG | 5 | active wallet updation | 7f9222224037cc508581f1ad5d598427fd0bcbf7 |
 | 4/27/2026 20:15:13 | Shreyasi Paul | shreyasi.paul.net@gmail.com | GBOODSECIOUWR4ABDT5AINWH6EXEAPH7NIHS7ITMZISNESMJVMGLWUZT | very good ui, easy to use | add dark mode | 626d5fc7aae121525fafc35b442e3944265762c8 |
 | 4/27/2026 19:37:14 | Debdeepa Dutta | debdeepadutta61@gmail.com | GCFVKT5EG2ZZWZSUIBS6LW7Z6C3R73CT2DX37CATP64WL2I32AOLJTPG |  | formatting issues when pasting notes | 626d5fc7aae121525fafc35b442e3944265762c8 |
