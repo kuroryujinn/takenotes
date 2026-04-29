@@ -512,6 +512,22 @@ export async function createNote(session: WalletSession, draft: NoteDraft): Prom
 
 export async function updateNote(session: WalletSession, draft: NoteDraft): Promise<boolean> {
   try {
+    // Debug: log payload summary to help diagnose failing updates
+    try {
+      // eslint-disable-next-line no-console
+      console.debug('updateNote payload:', {
+        address: session.address,
+        id: draft.id,
+        titleLength: draft.title?.length ?? 0,
+        contentLength: draft.content?.length ?? 0,
+        tagsCount: Array.isArray(draft.tags) ? draft.tags.length : 0,
+        categoryLength: draft.category?.length ?? 0,
+        isPinned: draft.isPinned,
+        priority: draft.priority,
+      });
+    } catch {
+      // ignore logging errors
+    }
     const result = await invokeWrite(session, 'update_note', [
       toAddressScVal(session.address),
       nativeToScVal(draft.id, { type: 'u32' }),
@@ -525,11 +541,44 @@ export async function updateNote(session: WalletSession, draft: NoteDraft): Prom
 
     return Boolean(result);
   } catch (error) {
+    const errMsg = toErrorMessage(error);
+    // eslint-disable-next-line no-console
+    console.error('updateNote RPC error:', errMsg);
+
     if (isMissingFunctionError(error, 'update_note') || isSignatureMismatchError(error, 'update_note')) {
-      throw new Error(
-        'This deployed contract does not support metadata-aware note updates yet. Please redeploy the latest contract.'
-      );
+      // eslint-disable-next-line no-console
+      console.warn('updateNote: detected missing function or signature mismatch for update_note; attempting legacy fallbacks');
+      // Backward compatibility: try older `update_note` signatures before failing.
+      try {
+        // Legacy: update_note(user, id, content)
+        await invokeWrite(session, 'update_note', [
+          toAddressScVal(session.address),
+          nativeToScVal(draft.id, { type: 'u32' }),
+          nativeToScVal(draft.content, { type: 'string' }),
+        ]);
+
+        return true;
+      } catch (legacyError) {
+        try {
+          // Alternate legacy: update_note(user, id, title, content)
+          await invokeWrite(session, 'update_note', [
+            toAddressScVal(session.address),
+            nativeToScVal(draft.id, { type: 'u32' }),
+            nativeToScVal(draft.title, { type: 'string' }),
+            nativeToScVal(draft.content, { type: 'string' }),
+          ]);
+
+          return true;
+        } catch (legacyError2) {
+          const details = toErrorMessage(legacyError2);
+          console.error('updateNote: legacy fallbacks failed:', details);
+          throw new Error(
+            `This deployed contract does not support metadata-aware note updates yet. Please redeploy the latest contract. Details: ${details}`
+          );
+        }
+      }
     }
+
     throw error;
   }
 }
