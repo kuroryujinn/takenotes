@@ -41,6 +41,7 @@ export default function NoteList({
     <section className="panel list-panel">
       <h2>Your Notes</h2>
       {activeAddressLabel ? <p className="muted">Viewing notes for: {activeAddressLabel}</p> : null}
+      {activeAddressLabel ? <p className="muted">Active address: {activeAddressLabel}</p> : null}
       {isLoading ? <p className="muted">Loading notes from Soroban...</p> : null}
       {!isLoading && notes.length === 0 ? (
         <p className="muted">No matching notes found. Try clearing search or filters.</p>
