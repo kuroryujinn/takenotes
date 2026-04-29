@@ -215,15 +215,15 @@ name,email,wallet_address,product_rating,feedback
 
 Status: Beta feedback collected from early adopters.
 
-### Sample Feedback Entries
+### Collected Feedback
 
-| Name | Rating | Feedback |
-|------|--------|----------|
-| Shreyasi Paul | 4.5/5 | "The wallet integration is seamless. Love that my notes are stored on-chain. Would appreciate a dark mode for late-night note-taking sessions." |
-| Ahir Sarkar | 5/5 | "Finally, a note app where I own my data! The history panel showing all versions is incredibly useful for tracking changes. Great work on the encryption feature." |
-| Swarupa Saha | 3.5/5 | "Good concept, but I found the encryption secret management confusing at first. Maybe add a help tooltip explaining how to safely store the encryption key?" |
-| Debojyoti De Majumdar | 4/5 | "Solid app. The IPFS integration adds confidence that my notes are truly decentralized. Would like to see bulk import/export for migrating from other note apps." |
-| Sylvia Barick | 4.5/5 | "Impressed with the speed and reliability. The note history feature is a game-changer for my research workflow. One request: allow me to add custom categories beyond 'General'." |
+| Timestamp | Name | Email | User Wallet Address | Feedback (What points you liked about the app) | Feedback (Features to improve) |
+|---|---|---|---|---|---|
+| 4/27/2026 19:18:46 | Sylvia Barick | taniabarick15@gmail.com | GDWXGQHM3RLUMDUJOMWYYLRZCHHC446Y4B4MG6OVHWYMATIIV2D72MXG | 5 | active wallet updation |
+| 4/27/2026 20:15:13 | Shreyasi Paul | shreyasi.paul.net@gmail.com | GBOODSECIOUWR4ABDT5AINWH6EXEAPH7NIHS7ITMZISNESMJVMGLWUZT | very good ui, easy to use | add dark mode |
+| 4/27/2026 19:37:14 | Debdeepa Dutta | debdeepadutta61@gmail.com | GCFVKT5EG2ZZWZSUIBS6LW7Z6C3R73CT2DX37CATP64WL2I32AOLJTPG |  | formatting issues when pasting notes |
+| 4/28/2026 15:30:02 | Swarupa Saha | swarupasaha78@gmail.com | GBF4KEPCUXPP6GIEI4ZO2S4R272STYUMHGLTOCV3HTABEM6GBFOG2XTY | The app is very easy to use. | The history button is not working. |
+| 4/29/2026 4:43:19 | Ahir Sarkar | ahirsarkar2022@gmail.com | GAXSR67TDMZZMIXVEVH3B75DHG46KCRIIYQ6PY3KW3N6HCA6GMKFOYEO | great app | ui |
 
 ### Feedback Trends
 
@@ -375,11 +375,3 @@ Use this checklist directly in this README.
 
 <img width="329" height="736" alt="Mobile preview" src="https://github.com/user-attachments/assets/cb08cd41-6c44-4b7a-9334-37c93e770779" />
 
-
-## List of Wallet Address
-- 'GCVBGPRU7YSL7NTK4WQ5SRGE4RC5CV7KNYBVJLNPKMMOUQRFPGRZRF2R'
-- 'GAUWUM7L4UV7NFRCZ5YXWANZL7ZKH4FCV3BMBVOR2N55Y2KVRO5CK3YC'
-- 'GDFKRCE7XGJYEBLH3TLBSFQN53ZHRBMABS34ZF7MNKJLQ7EDUIMJIVI6'
-- 'GCWBLWN4SQVFCDD7W7YUVXAIKJA2PCPX4UZ3P2E5N4UN7WXO6KF22SOA'
-- 'GA2SEP3TWRTTXN345RT3MRQWSQDDAHAXNOBNDRCN4JCDMYHMZWS53ET3'
-- 'GCYMOPQAYSAEJPT3J474KMCGBMARAN2FXA3TFYRYEZQPNRO4KNZAX675'

@@ -1,0 +1,46 @@
+/* Shared textbox styling for all text inputs, textareas, and selects. */
+:root {
+	--textbox-bg: #e8e8e8;
+	--textbox-fg: #111111;
+	--textbox-border: #c5c5c5;
+	--textbox-highlight: #ffffff;
+	--textbox-focus-bg: #e8e8e8;
+	--textbox-focus-outline: #7a7a7a;
+}
+
+.theme-dark {
+	--textbox-bg: #111922;
+	--textbox-fg: #e6eef6;
+	--textbox-border: rgba(230, 238, 246, 0.12);
+	--textbox-highlight: rgba(255, 255, 255, 0.05);
+	--textbox-focus-bg: #0f1620;
+	--textbox-focus-outline: #73c0fc;
+}
+
+input.input,
+textarea.input,
+select.input {
+	border: none;
+	padding: 1rem;
+	border-radius: 1rem;
+	background: var(--textbox-bg);
+	color: var(--textbox-fg);
+	box-shadow: 20px 20px 60px var(--textbox-border), -20px -20px 60px var(--textbox-highlight);
+	transition: background-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+	width: 100%;
+	font: inherit;
+}
+
+input.input:focus,
+textarea.input:focus,
+select.input:focus {
+	outline: 2px solid var(--textbox-focus-outline);
+	outline-offset: 2px;
+	background: var(--textbox-focus-bg);
+	box-shadow: inset 20px 20px 60px var(--textbox-border),
+		inset -20px -20px 60px var(--textbox-highlight);
+}
+
+select.input {
+	appearance: none;
+}

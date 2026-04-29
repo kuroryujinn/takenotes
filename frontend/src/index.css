@@ -1,4 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=Inter:wght@400;700&family=IBM+Plex+Sans:wght@400;700&display=swap');
+@import url('./styles/textbox.css');
+@import url('./styles/checkbox.css');
 
 * {
   box-sizing: border-box;
@@ -7,7 +9,8 @@
 body {
   margin: 0;
   font-family: 'Inter', 'IBM Plex Sans', sans-serif;
-  background: #F5F5F0;
+  background: var(--bg);
+  color: var(--ink);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

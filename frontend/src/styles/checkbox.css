@@ -1,0 +1,69 @@
+/* Shared checkbox styling with theme support. */
+:root {
+  --checkbox-focus: #2d8cf0;
+  --checkbox-unfocused: #ccc;
+  --checkbox-bg: #fff;
+  --checkbox-mark: #fff;
+  --checkbox-border: #323232;
+}
+
+.theme-dark {
+  --checkbox-focus: #73c0fc;
+  --checkbox-unfocused: #444;
+  --checkbox-bg: #0f1620;
+  --checkbox-mark: #e6eef6;
+  --checkbox-border: #e6eef6;
+}
+
+.container {
+  --input-focus: var(--checkbox-focus);
+  --input-out-of-focus: var(--checkbox-unfocused);
+  --bg-color: var(--checkbox-mark);
+  --bg-color-alt: #666;
+  --main-color: var(--checkbox-border);
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.container input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.checkmark {
+  width: 30px;
+  height: 30px;
+  position: relative;
+  flex-shrink: 0;
+  border: 2px solid var(--main-color);
+  border-radius: 5px;
+  box-shadow: 4px 4px var(--main-color);
+  background-color: var(--input-out-of-focus);
+  transition: all 0.3s ease;
+}
+
+.container input:checked ~ .checkmark {
+  background-color: var(--input-focus);
+}
+
+.checkmark:after {
+  content: "";
+  width: 7px;
+  height: 15px;
+  position: absolute;
+  top: 2px;
+  left: 8px;
+  display: none;
+  border: solid var(--bg-color);
+  border-width: 0 2.5px 2.5px 0;
+  transform: rotate(45deg);
+}
+
+.container input:checked ~ .checkmark:after {
+  display: block;
+}

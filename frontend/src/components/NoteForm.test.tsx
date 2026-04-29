@@ -45,4 +45,20 @@ describe('NoteForm', () => {
     expect(await screen.findByText(/characters or less/i)).toBeInTheDocument();
     expect(onSubmit).not.toHaveBeenCalled();
   });
+
+  test('normalizes pasted content in the note body', () => {
+    const onSubmit = jest.fn().mockResolvedValue(undefined);
+
+    render(<NoteForm mode="create" isSubmitting={false} onSubmit={onSubmit} />);
+
+    const textarea = screen.getByLabelText(/content/i) as HTMLTextAreaElement;
+
+    fireEvent.paste(textarea, {
+      clipboardData: {
+        getData: () => 'Line\u00a01\r\n\r\n\r\n\r\nLine\u0007 2',
+      },
+    });
+
+    expect(textarea.value).toBe('Line 1\n\n\nLine 2');
+  });
 });

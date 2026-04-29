@@ -42,6 +42,15 @@ export function sanitizeMultilineText(input: string): string {
     .trim();
 }
 
+export function sanitizePastedMultilineText(input: string): string {
+  const normalized = input
+    .replace(/\u00a0/g, ' ')
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n');
+
+  return removeControlCharsExceptNewline(normalized).replace(/\n{4,}/g, '\n\n\n');
+}
+
 export function sanitizeTags(input: string): string[] {
   const unique = new Set<string>();
 

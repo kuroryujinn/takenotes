@@ -1,6 +1,7 @@
 import {
   NOTE_LIMITS,
   sanitizeMultilineText,
+  sanitizePastedMultilineText,
   sanitizeSingleLineText,
   sanitizeTags,
 } from './sanitize';
@@ -20,5 +21,10 @@ describe('sanitize utils', () => {
     const tags = sanitizeTags(`work, urgent, work, ${longTag}`);
 
     expect(tags).toEqual(['work', 'urgent', longTag.slice(0, NOTE_LIMITS.tagMaxLength)]);
+  });
+
+  test('sanitizePastedMultilineText removes control chars and normalizes excessive newlines', () => {
+    const input = 'Line\u00a01\r\n\r\n\r\n\r\nLine\u0007 2';
+    expect(sanitizePastedMultilineText(input)).toBe('Line 1\n\n\nLine 2');
   });
 });

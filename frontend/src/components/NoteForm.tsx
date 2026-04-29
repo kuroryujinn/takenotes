@@ -1,8 +1,9 @@
-import React, { FormEvent, useEffect, useState } from 'react';
+import React, { ClipboardEvent, FormEvent, useEffect, useState } from 'react';
 import type { NoteDraft } from '../types/note';
 import {
   NOTE_LIMITS,
   sanitizeMultilineText,
+  sanitizePastedMultilineText,
   sanitizeSingleLineText,
   sanitizeTags,
 } from '../utils/sanitize';
@@ -55,6 +56,32 @@ export default function NoteForm({
   }, [initialNote, mode]);
 
   const submitLabel = mode === 'create' ? 'Create Note' : 'Save Changes';
+
+  const handleContentPaste = (event: ClipboardEvent<HTMLTextAreaElement>) => {
+    const raw = event.clipboardData.getData('text/plain');
+    if (!raw) {
+      return;
+    }
+
+    event.preventDefault();
+    const normalizedPaste = sanitizePastedMultilineText(raw);
+    const textarea = event.currentTarget;
+    const selectionStart = textarea.selectionStart ?? content.length;
+    const selectionEnd = textarea.selectionEnd ?? content.length;
+
+    setContent((currentContent) => {
+      const nextContent =
+        currentContent.slice(0, selectionStart) + normalizedPaste + currentContent.slice(selectionEnd);
+
+      window.requestAnimationFrame(() => {
+        const caret = selectionStart + normalizedPaste.length;
+        textarea.selectionStart = caret;
+        textarea.selectionEnd = caret;
+      });
+
+      return nextContent;
+    });
+  };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -116,6 +143,7 @@ export default function NoteForm({
         <label>
           Note ID
           <input
+            className="input"
             value={idValue}
             onChange={(event) => setIdValue(event.target.value)}
             inputMode="numeric"
@@ -128,6 +156,7 @@ export default function NoteForm({
         <label>
           Title
           <input
+            className="input"
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             placeholder="Quick summary"
@@ -137,8 +166,10 @@ export default function NoteForm({
         <label>
           Content
           <textarea
+            className="input"
             value={content}
             onChange={(event) => setContent(event.target.value)}
+            onPaste={handleContentPaste}
             placeholder="Write your note"
             rows={4}
             required
@@ -148,6 +179,7 @@ export default function NoteForm({
         <label>
           Tags (comma separated)
           <input
+            className="input"
             value={tagsValue}
             onChange={(event) => setTagsValue(event.target.value)}
             placeholder="work, ideas, urgent"
@@ -157,6 +189,7 @@ export default function NoteForm({
         <label>
           Category
           <input
+            className="input"
             value={category}
             onChange={(event) => setCategory(event.target.value)}
             placeholder="General"
@@ -166,6 +199,7 @@ export default function NoteForm({
         <label>
           Priority (0-255)
           <input
+            className="input"
             value={priorityValue}
             onChange={(event) => setPriorityValue(event.target.value)}
             inputMode="numeric"
@@ -174,12 +208,13 @@ export default function NoteForm({
           />
         </label>
 
-        <label className="checkbox-row">
+        <label className="container">
           <input
             type="checkbox"
             checked={isPinned}
             onChange={(event) => setIsPinned(event.target.checked)}
           />
+          <span className="checkmark"></span>
           <span>Pin this note</span>
         </label>
 

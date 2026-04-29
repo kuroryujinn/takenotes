@@ -14,10 +14,28 @@
   --shadow-neo-hover: 8px 8px 0px #000000;
 }
 
+/* Dark theme overrides applied when `theme-dark` class is present on <html> */
+.theme-dark {
+  --bg: #0b0f12;
+  --surface: #0f1620;
+  --ink: #e6eef6;
+  --muted: #9fb0c8;
+  --line: #22313a;
+  --primary: #1f7a6b;
+  --primary-ink: #ffffff;
+  --danger: #ff6b6b;
+  --danger-ink: #000000;
+  --accent: #2b7a78;
+  --border-thick: 4px solid rgba(230,238,246,0.06);
+  --shadow-neo: 0 6px 18px rgba(0,0,0,0.6);
+  --shadow-neo-hover: 0 8px 20px rgba(0,0,0,0.7);
+}
+
 .app-shell {
   min-height: 100vh;
   padding: 3rem 1.5rem;
   color: var(--ink);
+  background: var(--bg);
   max-width: 900px;
   margin: 0 auto;
 }
@@ -25,7 +43,7 @@
 .hero {
   margin-bottom: 2rem;
   background: var(--primary);
-  color: #ffffff;
+  color: var(--primary-ink);
   border-radius: 0;
   border: var(--border-thick);
   padding: 2.5rem;
@@ -44,7 +62,7 @@
   margin: 0.5rem 0 1rem;
   font-size: 48px;
   line-height: 1.1;
-  color: #fff;
+  color: var(--primary-ink);
 }
 
 .hero p {
@@ -123,24 +141,24 @@
   font-weight: 700;
 }
 
-input,
-textarea,
-select {
+input:not(.input),
+textarea:not(.input),
+select:not(.input) {
   border: var(--border-thick);
   border-radius: 0;
   padding: 1rem;
   font: inherit;
   font-size: 16px;
   color: var(--ink);
-  background: #fff;
+  background: var(--surface);
   transition: all 150ms ease;
 }
 
-input:focus,
-textarea:focus,
-select:focus {
+input:not(.input):focus,
+textarea:not(.input):focus,
+select:not(.input):focus {
   outline: none;
-  background: #FFFCE8;
+  background: var(--surface);
   box-shadow: inset 4px 4px 0px rgba(0,0,0,0.05);
 }
 
@@ -164,9 +182,9 @@ select:focus {
 
 .history-item,
 .feed-item {
-  border: 3px solid #000;
+  border: 3px solid var(--line);
   padding: 0.75rem;
-  background: #fffce8;
+  background: var(--surface);
 }
 
 .history-item header {
@@ -223,7 +241,7 @@ select:focus {
 .note-card {
   border: var(--border-thick);
   border-radius: 0;
-  background: #fff;
+  background: var(--surface);
   padding: 1.5rem;
   box-shadow: var(--shadow-neo);
   transition: transform 150ms ease, box-shadow 150ms ease;
@@ -240,7 +258,7 @@ select:focus {
   align-items: flex-start;
   margin-bottom: 1rem;
   padding-bottom: 1rem;
-  border-bottom: 4px solid black;
+  border-bottom: 4px solid var(--line);
 }
 
 .note-card header h3 {
@@ -272,8 +290,8 @@ select:focus {
 
 .meta-row span,
 .meta-row strong {
-  border: 2px solid #000;
-  background: #fffce8;
+  border: 2px solid var(--line);
+  background: var(--surface);
   padding: 0.2rem 0.5rem;
 }
 
@@ -285,8 +303,8 @@ select:focus {
 }
 
 .tag-pill {
-  border: 2px solid #000;
-  background: #eef8fb;
+  border: 2px solid var(--line);
+  background: var(--surface);
   padding: 0.2rem 0.5rem;
   font-size: 12px;
   font-weight: 700;

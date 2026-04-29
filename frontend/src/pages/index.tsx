@@ -6,6 +6,8 @@ import NoteHistoryPanel from '../components/NoteHistoryPanel';
 import NoteList from '../components/NoteList';
 import NotesToolbar from '../components/NotesToolbar';
 import WalletConnect from '../components/WalletConnect';
+import '../styles/toggle.css';
+import '../styles/viewmode.css';
 import {
   connectWallet,
   createNote,
@@ -34,7 +36,8 @@ export default function HomePage() {
   const [noteHistory, setNoteHistory] = useState<NoteHistoryEntry[]>([]);
   const [isLoadingNoteHistory, setIsLoadingNoteHistory] = useState<boolean>(false);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
-  const [isRefreshingWallet, setIsRefreshingWallet] = useState<boolean>(false);
+  const [requireManualReconnect, setRequireManualReconnect] = useState<boolean>(false);
+  
   const [isLoadingNotes, setIsLoadingNotes] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [deletingNoteId, setDeletingNoteId] = useState<number | null>(null);
@@ -43,6 +46,14 @@ export default function HomePage() {
   const [activeTag, setActiveTag] = useState<string>('');
   const [activeCategory, setActiveCategory] = useState<string>('');
   const [encryptionSecret, setEncryptionSecret] = useState<string>('');
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    try {
+      const raw = localStorage.getItem('takenotes:dark');
+      return raw === '1';
+    } catch {
+      return false;
+    }
+  });
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string>('Connect Freighter to manage notes.');
   const notesRequestIdRef = useRef(0);
@@ -189,7 +200,7 @@ export default function HomePage() {
 
       setIsLoadingActivityFeed(false);
     }
-  }, []);
+  }, [requireManualReconnect]);
 
   const loadNoteHistory = useCallback(async (activeSession: WalletSession, noteId: number) => {
     const requestId = historyRequestIdRef.current + 1;
@@ -205,12 +216,14 @@ export default function HomePage() {
       }
 
       setNoteHistory(readableHistory);
+      setErrorMessage(null);
     } catch {
       if (requestId !== historyRequestIdRef.current) {
         return;
       }
 
       setNoteHistory([]);
+      setErrorMessage('Could not load note history for this note.');
     } finally {
       if (requestId !== historyRequestIdRef.current) {
         return;
@@ -243,6 +256,10 @@ export default function HomePage() {
   );
 
   const syncSessionFromWallet = useCallback(async (allowDisconnect = false): Promise<WalletSession | null> => {
+    if (requireManualReconnect) {
+      return null;
+    }
+
     const latestSession = await getWalletSession();
 
     if (!latestSession && !allowDisconnect) {
@@ -267,7 +284,7 @@ export default function HomePage() {
       return currentSession;
     });
     return latestSession;
-  }, []);
+  }, [requireManualReconnect]);
 
   useEffect(() => {
     setNotes([]);
@@ -281,6 +298,13 @@ export default function HomePage() {
 
   useEffect(() => {
     void syncSessionFromWallet(true);
+
+    // Apply persisted theme
+    if (isDark) {
+      document.documentElement.classList.add('theme-dark');
+    } else {
+      document.documentElement.classList.remove('theme-dark');
+    }
 
     const handleVisibilitySync = () => {
       if (document.visibilityState === 'visible') {
@@ -309,6 +333,18 @@ export default function HomePage() {
     void loadNotes(session);
     void loadActivityFeed(session);
   }, [loadActivityFeed, loadNotes, session]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('takenotes:dark', isDark ? '1' : '0');
+    } catch {}
+
+    if (isDark) {
+      document.documentElement.classList.add('theme-dark');
+    } else {
+      document.documentElement.classList.remove('theme-dark');
+    }
+  }, [isDark]);
 
   const createMode = useMemo(() => editingDraft === null, [editingDraft]);
 
@@ -410,6 +446,8 @@ export default function HomePage() {
     setErrorMessage(null);
 
     try {
+      // allow auto-sync again when user actively connects
+      setRequireManualReconnect(false);
       const connectedSession = await connectWallet();
       setSession(connectedSession);
       setStatusMessage(`Wallet connected: ${formatAddress(connectedSession.address)}.`);
@@ -420,21 +458,44 @@ export default function HomePage() {
     }
   };
 
-  const handleRefreshWallet = async () => {
-    setIsRefreshingWallet(true);
+  const handleDisconnectWallet = async () => {
+    setIsConnecting(true);
     setErrorMessage(null);
 
     try {
-      const refreshedSession = await syncSessionFromWallet(true);
-      if (!refreshedSession && !session) {
-        setStatusMessage('No wallet session detected. Connect Freighter to continue.');
-      }
-    } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : 'Could not refresh wallet session.');
+      // require manual reconnect so the session won't be re-detected automatically
+      setRequireManualReconnect(true);
+      setSession(null);
+      setNotes([]);
+      setActivityFeed([]);
+      setHistoryNoteId(null);
+      setNoteHistory([]);
+      setEditingDraft(null);
+      setActiveTag('');
+      setActiveCategory('');
+      setStatusMessage('Wallet disconnected. You must reconnect to continue.');
     } finally {
-      setIsRefreshingWallet(false);
+      setIsConnecting(false);
     }
   };
+
+  const handleWalletConnectionToggle = async (nextConnected: boolean) => {
+    if (nextConnected) {
+      if (session) {
+        return;
+      }
+      await handleConnectWallet();
+      return;
+    }
+
+    if (!session) {
+      return;
+    }
+
+    await handleDisconnectWallet();
+  };
+
+  // Refresh functionality is handled via the wallet toggle; no separate refresh button.
 
   const handleCreate = async (draft: NoteDraft) => {
     if (!session) {
@@ -591,6 +652,7 @@ export default function HomePage() {
     }
 
     setHistoryNoteId(note.id);
+    setStatusMessage(`Loading history for note #${note.id}...`);
     await loadNoteHistory(session, note.id);
   };
 
@@ -599,6 +661,42 @@ export default function HomePage() {
       <section className="hero">
         <h1>TakeNotes</h1>
         <p>Securely store personal notes with wallet-authenticated blockchain transactions.</p>
+        <div className="hero-controls" style={{ marginTop: 12 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
+            <label className="switch">
+              <input
+                className="mode-switch"
+                type="checkbox"
+                checked={isDark}
+                onChange={(e) => setIsDark(e.target.checked)}
+                aria-label={isDark ? 'Disable dark mode' : 'Enable dark mode'}
+              />
+              <span className="slider">
+                <span className="sun" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="12" cy="12" r="5" fill="#ffd43b" />
+                    <g stroke="#ffd43b" strokeWidth="2" strokeLinecap="round">
+                      <line x1="12" y1="1.5" x2="12" y2="4" />
+                      <line x1="12" y1="20" x2="12" y2="22.5" />
+                      <line x1="1.5" y1="12" x2="4" y2="12" />
+                      <line x1="20" y1="12" x2="22.5" y2="12" />
+                      <line x1="4.7" y1="4.7" x2="6.5" y2="6.5" />
+                      <line x1="17.5" y1="17.5" x2="19.3" y2="19.3" />
+                      <line x1="4.7" y1="19.3" x2="6.5" y2="17.5" />
+                      <line x1="17.5" y1="6.5" x2="19.3" y2="4.7" />
+                    </g>
+                  </svg>
+                </span>
+                <span className="moon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M21 13.6A9 9 0 1 1 10.4 3a7 7 0 1 0 10.6 10.6z" />
+                  </svg>
+                </span>
+              </span>
+            </label>
+          </div>
+          <span style={{ marginLeft: 8, fontWeight: 700 }}>{isDark ? 'Dark Mode' : 'Light Mode'}</span>
+        </div>
       </section>
 
       <section className="status-row">
@@ -610,10 +708,9 @@ export default function HomePage() {
         <div>
           <WalletConnect
             address={session?.address ?? null}
-            isConnecting={isConnecting}
-            isRefreshing={isRefreshingWallet}
-            onConnect={handleConnectWallet}
-            onRefresh={handleRefreshWallet}
+            isTogglingConnection={isConnecting}
+            isRefreshing={false}
+            onToggleConnection={handleWalletConnectionToggle}
             encryptionSecret={encryptionSecret}
             onEncryptionSecretChange={setEncryptionSecret}
           />

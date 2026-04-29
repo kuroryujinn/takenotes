@@ -36,6 +36,7 @@ export default function NotesToolbar({
         <label>
           Search
           <input
+            className="input"
             value={searchTerm}
             onChange={(event) => onSearchTermChange(event.target.value)}
             placeholder="Search title or content"
@@ -44,7 +45,7 @@ export default function NotesToolbar({
 
         <label>
           Tag
-          <select value={activeTag} onChange={(event) => onTagChange(event.target.value)}>
+          <select className="input" value={activeTag} onChange={(event) => onTagChange(event.target.value)}>
             <option value="">All tags</option>
             {availableTags.map((tag) => (
               <option key={tag} value={tag}>
@@ -56,7 +57,7 @@ export default function NotesToolbar({
 
         <label>
           Category
-          <select value={activeCategory} onChange={(event) => onCategoryChange(event.target.value)}>
+          <select className="input" value={activeCategory} onChange={(event) => onCategoryChange(event.target.value)}>
             <option value="">All categories</option>
             {availableCategories.map((category) => (
               <option key={category} value={category}>

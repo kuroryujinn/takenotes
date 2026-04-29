@@ -392,12 +392,13 @@ export async function connectWallet(): Promise<WalletSession> {
 
   try {
     assertFreighterCall(await isConnected());
-    const access = assertFreighterCall(await requestAccess());
+    assertFreighterCall(await requestAccess());
+    const addressResult = assertFreighterCall(await getAddress());
     const networkPassphrase = await getNetworkPassphrase();
     assertNetworkMatch(networkPassphrase);
 
     return {
-      address: access.address,
+      address: addressResult.address,
       networkPassphrase,
     };
   } catch (error) {
@@ -411,11 +412,41 @@ export async function fetchNotes(session: WalletSession): Promise<Note[]> {
 }
 
 export async function fetchNoteHistory(session: WalletSession, noteId: number): Promise<NoteHistoryEntry[]> {
-  const result = await invokeRead(session, 'get_note_history', [
-    toAddressScVal(session.address),
-    nativeToScVal(noteId, { type: 'u32' }),
-  ]);
-  return toHistoryArray(result);
+  try {
+    const result = await invokeRead(session, 'get_note_history', [
+      toAddressScVal(session.address),
+      nativeToScVal(noteId, { type: 'u32' }),
+    ]);
+    return toHistoryArray(result);
+  } catch (error) {
+    if (!(isMissingFunctionError(error, 'get_note_history') || isSignatureMismatchError(error, 'get_note_history'))) {
+      throw error;
+    }
+
+    const target = loggerContract();
+    if (!target) {
+      return [];
+    }
+
+    const eventsResult = await invokeReadFromContract(session, target, 'get_events', [toAddressScVal(session.address)]);
+    const historyFallback = toActivityArray(eventsResult)
+      .filter((event) => event.noteId === noteId)
+      .sort((left, right) => left.timestamp - right.timestamp)
+      .map((event, index) => ({
+        noteId: event.noteId,
+        version: index + 1,
+        action: event.action || 'updated',
+        title: '',
+        content: '[History payload unavailable on this contract version.]',
+        tags: [],
+        category: 'General',
+        isPinned: false,
+        priority: 0,
+        timestamp: event.timestamp,
+      }));
+
+    return historyFallback;
+  }
 }
 
 export async function fetchActivityFeed(session: WalletSession): Promise<ActivityEvent[]> {
