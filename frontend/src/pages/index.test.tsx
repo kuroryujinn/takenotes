@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import HomePage from './index';
 import type { ActivityEvent, Note, NoteHistoryEntry, WalletSession } from '../types/note';
@@ -335,7 +335,8 @@ describe('HomePage interactions', () => {
 
     activeSession = sessionTwo;
     walletOneNotes = [];
-    await user.click(screen.getByRole('button', { name: /refresh wallet now/i }));
+
+    fireEvent(window, new Event('focus'));
 
     expect(await screen.findByRole('heading', { name: 'Wallet Two Note' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Wallet One Note' })).not.toBeInTheDocument();
