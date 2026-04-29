@@ -217,6 +217,8 @@ Status: Beta feedback collected from early adopters.
 
 ### Collected Feedback
 
+[Google Sheets](https://docs.google.com/spreadsheets/d/1z5n-C7riXzj6b8HdLrdKORbvGSxRqC6W1sHUBKGPbvI/edit?resourcekey=&gid=2080654632#gid=2080654632)
+
 | Timestamp | Name | Email | User Wallet Address | Feedback (What points you liked about the app) | Feedback (Features to improve) | Commit ID |
 |---|---|---|---|---|---|
 | 4/27/2026 19:18:46 | Sylvia Barick | taniabarick15@gmail.com | GDWXGQHM3RLUMDUJOMWYYLRZCHHC446Y4B4MG6OVHWYMATIIV2D72MXG | 5 | active wallet updation | 7f9222224037cc508581f1ad5d598427fd0bcbf7 |
