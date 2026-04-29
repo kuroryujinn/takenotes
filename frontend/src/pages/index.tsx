@@ -200,7 +200,7 @@ export default function HomePage() {
 
       setIsLoadingActivityFeed(false);
     }
-  }, [requireManualReconnect]);
+  }, []);
 
   const loadNoteHistory = useCallback(async (activeSession: WalletSession, noteId: number) => {
     const requestId = historyRequestIdRef.current + 1;
@@ -319,7 +319,7 @@ export default function HomePage() {
       window.removeEventListener('focus', handleVisibilitySync);
       document.removeEventListener('visibilitychange', handleVisibilitySync);
     };
-  }, [syncSessionFromWallet]);
+  }, [isDark, syncSessionFromWallet]);
 
   useEffect(() => {
     if (!session) {
