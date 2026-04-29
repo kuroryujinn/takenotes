@@ -38,10 +38,10 @@ function randomBytes(length: number): Uint8Array {
   return out;
 }
 
-async function deriveAesKey(address: string, secret: string, salt: Uint8Array): Promise<CryptoKey> {
+async function deriveAesKey(address: string, salt: Uint8Array): Promise<CryptoKey> {
   const keyMaterial = await crypto.subtle.importKey(
     'raw',
-    textEncoder.encode(`${address}:${secret}`),
+    textEncoder.encode(address),
     { name: 'PBKDF2' },
     false,
     ['deriveKey']
@@ -64,15 +64,10 @@ async function deriveAesKey(address: string, secret: string, salt: Uint8Array): 
   );
 }
 
-export async function encryptNoteContent(address: string, secret: string, content: string): Promise<string> {
-  const normalizedSecret = secret.trim();
-  if (!normalizedSecret) {
-    throw new Error('Encryption secret is required.');
-  }
-
+export async function encryptNoteContent(address: string, content: string): Promise<string> {
   const salt = randomBytes(SALT_BYTES);
   const iv = randomBytes(IV_BYTES);
-  const key = await deriveAesKey(address, normalizedSecret, salt);
+  const key = await deriveAesKey(address, salt);
 
   const encrypted = await crypto.subtle.encrypt(
     {
@@ -93,12 +88,7 @@ export async function encryptNoteContent(address: string, secret: string, conten
   return JSON.stringify(payload);
 }
 
-export async function decryptNoteContent(address: string, secret: string, encryptedJson: string): Promise<string> {
-  const normalizedSecret = secret.trim();
-  if (!normalizedSecret) {
-    throw new Error('Encryption secret is required for decryption.');
-  }
-
+export async function decryptNoteContent(address: string, encryptedJson: string): Promise<string> {
   let payload: EncryptedPayload;
 
   try {
@@ -114,7 +104,7 @@ export async function decryptNoteContent(address: string, secret: string, encryp
   const salt = fromBase64(payload.s);
   const iv = fromBase64(payload.i);
   const data = fromBase64(payload.d);
-  const key = await deriveAesKey(address, normalizedSecret, salt);
+  const key = await deriveAesKey(address, salt);
 
   try {
     const decrypted = await crypto.subtle.decrypt(
@@ -128,6 +118,6 @@ export async function decryptNoteContent(address: string, secret: string, encryp
 
     return textDecoder.decode(decrypted);
   } catch (error) {
-    throw new Error('Unable to decrypt note content. Verify your encryption secret.');
+    throw new Error('Unable to decrypt note content. Verify your wallet session.');
   }
 }

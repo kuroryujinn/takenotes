@@ -37,7 +37,7 @@ export default function HomePage() {
   const [isLoadingNoteHistory, setIsLoadingNoteHistory] = useState<boolean>(false);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const [requireManualReconnect, setRequireManualReconnect] = useState<boolean>(false);
-  
+
   const [isLoadingNotes, setIsLoadingNotes] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [deletingNoteId, setDeletingNoteId] = useState<number | null>(null);
@@ -45,7 +45,6 @@ export default function HomePage() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [activeTag, setActiveTag] = useState<string>('');
   const [activeCategory, setActiveCategory] = useState<string>('');
-  const [encryptionSecret, setEncryptionSecret] = useState<string>('');
   const [isDark, setIsDark] = useState<boolean>(() => {
     try {
       const raw = localStorage.getItem('takenotes:dark');
@@ -74,18 +73,9 @@ export default function HomePage() {
             return note;
           }
 
-          if (!encryptionSecret.trim()) {
-            return {
-              ...note,
-              content: '[Encrypted note. Enter your encryption secret to decrypt.]',
-              contentCid: cid,
-              isEncrypted: true,
-            };
-          }
-
           try {
             const encryptedPayload = await fetchEncryptedPayloadFromIpfs(cid);
-            const decryptedContent = await decryptNoteContent(activeSession.address, encryptionSecret, encryptedPayload);
+            const decryptedContent = await decryptNoteContent(activeSession.address, encryptedPayload);
 
             return {
               ...note,
@@ -96,7 +86,7 @@ export default function HomePage() {
           } catch {
             return {
               ...note,
-              content: '[Unable to decrypt note. Verify your encryption secret.]',
+              content: '[Unable to decrypt note. Verify your wallet session.]',
               contentCid: cid,
               isEncrypted: true,
             };
@@ -104,7 +94,7 @@ export default function HomePage() {
         })
       );
     },
-    [encryptionSecret]
+    []
   );
 
   const hydrateReadableHistoryEntries = useCallback(
@@ -117,16 +107,9 @@ export default function HomePage() {
             return entry;
           }
 
-          if (!encryptionSecret.trim()) {
-            return {
-              ...entry,
-              content: '[Encrypted version. Enter your encryption secret to decrypt.]',
-            };
-          }
-
           try {
             const encryptedPayload = await fetchEncryptedPayloadFromIpfs(cid);
-            const decryptedContent = await decryptNoteContent(activeSession.address, encryptionSecret, encryptedPayload);
+            const decryptedContent = await decryptNoteContent(activeSession.address, encryptedPayload);
 
             return {
               ...entry,
@@ -135,13 +118,13 @@ export default function HomePage() {
           } catch {
             return {
               ...entry,
-              content: '[Unable to decrypt this version. Verify your encryption secret.]',
+              content: '[Unable to decrypt this version. Verify your wallet session.]',
             };
           }
         })
       );
     },
-    [encryptionSecret]
+    []
   );
 
   const loadNotes = useCallback(async (activeSession: WalletSession) => {
@@ -503,17 +486,12 @@ export default function HomePage() {
       return;
     }
 
-    if (!encryptionSecret.trim()) {
-      setErrorMessage('Enter your encryption secret before creating notes.');
-      return;
-    }
-
     setIsSubmitting(true);
     setErrorMessage(null);
     setStatusMessage(`Transaction request opened for note #${draft.id}. Approve it in Freighter to continue.`);
 
     try {
-      const encryptedPayload = await encryptNoteContent(session.address, encryptionSecret, draft.content);
+      const encryptedPayload = await encryptNoteContent(session.address, draft.content);
       let contentReference = draft.content;
 
       try {
@@ -559,17 +537,12 @@ export default function HomePage() {
       return;
     }
 
-    if (!encryptionSecret.trim()) {
-      setErrorMessage('Enter your encryption secret before updating notes.');
-      return;
-    }
-
     setIsSubmitting(true);
     setErrorMessage(null);
     setStatusMessage(`Transaction request opened for note #${draft.id}. Approve it in Freighter to continue.`);
 
     try {
-      const encryptedPayload = await encryptNoteContent(session.address, encryptionSecret, draft.content);
+      const encryptedPayload = await encryptNoteContent(session.address, draft.content);
       let contentReference = draft.content;
 
       try {
@@ -660,7 +633,7 @@ export default function HomePage() {
     <main className="app-shell">
       <section className="hero">
         <h1>TakeNotes</h1>
-        <p>Securely store personal notes with wallet-authenticated blockchain transactions.</p>
+        <p className="hero-tagline">Wallet-first notes, without the clutter.</p>
         <div className="hero-controls" style={{ marginTop: 12 }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 12 }}>
             <label className="switch">
@@ -711,8 +684,6 @@ export default function HomePage() {
             isTogglingConnection={isConnecting}
             isRefreshing={false}
             onToggleConnection={handleWalletConnectionToggle}
-            encryptionSecret={encryptionSecret}
-            onEncryptionSecretChange={setEncryptionSecret}
           />
 
           <NoteForm

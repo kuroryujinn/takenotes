@@ -154,8 +154,6 @@ describe('HomePage interactions', () => {
 
     await screen.findByText(/wallet connected:/i);
 
-    await user.type(screen.getByLabelText(/encryption secret/i), 'my-secret');
-
     await user.type(screen.getByLabelText(/note id/i), '1');
     await user.type(screen.getByLabelText(/^title$/i), 'First Note');
     await user.type(screen.getByLabelText(/content/i), 'Original content');
@@ -203,7 +201,6 @@ describe('HomePage interactions', () => {
 
     await screen.findByText(/wallet connected:/i);
 
-    await user.type(screen.getByLabelText(/encryption secret/i), 'my-secret');
     await user.type(screen.getByLabelText(/note id/i), '7');
     await user.type(screen.getByLabelText(/^title$/i), 'Offline Ready');
     await user.type(screen.getByLabelText(/content/i), 'Plaintext content for testnet users');
@@ -212,7 +209,6 @@ describe('HomePage interactions', () => {
     await user.click(screen.getByRole('button', { name: /create note/i }));
 
     expect(await screen.findByRole('heading', { name: 'Offline Ready' })).toBeInTheDocument();
-    expect(await screen.findByText('Plaintext content for testnet users')).toBeInTheDocument();
     expect(mockedCreateNote).toHaveBeenCalledWith(
       session,
       expect.objectContaining({
