@@ -370,6 +370,10 @@ Use this checklist directly in this README.
 - Frontend deployment:
 	https://takenotes-delta.vercel.app/
 
+## Google form response link for feedback
+
+https://forms.gle/fA4MpmNio59zL6BP9
+
 ## Screenshots
 
 ![Deployment Screenshot](images/deployment.png)
